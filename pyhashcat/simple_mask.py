@@ -72,11 +72,8 @@ if hc.hashcat_session_execute() >= 0:
 
 	if len(cracked) > 0:
 		for c in cracked:
-			#print(c)
-			print(hc.separator)
-			print(type(hc.separator))
-			#ahash, plain = c.split(hc.separator)
-			#print(ahash, " --> ", plain)
+			ahash, plain = c.split(hc.separator.decode("utf-8"))
+			print(ahash, " --> ", plain)
 	else:
 		print("No cracked hashes found")
 else:
