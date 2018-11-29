@@ -3740,6 +3740,54 @@ static int hashcat_setopencl_vector_width (hashcatObject * self, PyObject * valu
 
 }
 
+PyDoc_STRVAR(optimized_kernel_enable__doc__,
+"optimized_kernel_enable\tbool\tEnable optimized kernel (-O)\n\n");
+
+// getter - optimized_kernel_enable 
+static PyObject *hashcat_getoptimized_kernel_enable(hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->optimized_kernel_enable);
+
+}
+
+// setter - optimized_kernel_enable
+static int hashcat_setoptimized_kernel_enable(hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete optimized_kernel_enable attribute");
+    return -1;
+  }
+
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The optimized_kernel_enable attribute value must be a bool");
+    return -1;
+  }
+
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->optimized_kernel_enable = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->optimized_kernel_enable= 0;
+
+  }
+
+  return 0;
+
+}
+
 PyDoc_STRVAR(outfile__doc__,
 "outfile\tstr\tDefine outfile for recovered hash\n\n");
 
@@ -5324,6 +5372,7 @@ static PyGetSetDef hashcat_getseters[] = {
   {"opencl_info", (getter) hashcat_getopencl_info, (setter) hashcat_setopencl_info, opencl_info__doc__, NULL},
   {"opencl_platforms", (getter) hashcat_getopencl_platforms, (setter) hashcat_setopencl_platforms, opencl_platforms__doc__, NULL},
   {"opencl_vector_width", (getter) hashcat_getopencl_vector_width, (setter) hashcat_setopencl_vector_width, opencl_vector_width__doc__, NULL},
+  {"optimized_kernel_enable", (getter) hashcat_getoptimized_kernel_enable, (setter) hashcat_setoptimized_kernel_enable, optimized_kernel_enable__doc__, NULL},
   {"outfile", (getter) hashcat_getoutfile, (setter) hashcat_setoutfile, outfile__doc__, NULL},
   {"outfile_autohex", (getter) hashcat_getoutfile_autohex, (setter) hashcat_setoutfile_autohex, outfile_autohex__doc__, NULL},
   {"outfile_check_dir", (getter) hashcat_getoutfile_check_dir, (setter) hashcat_setoutfile_check_dir, outfile_check_dir__doc__, NULL},
