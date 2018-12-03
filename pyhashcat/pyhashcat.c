@@ -461,7 +461,7 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
 {
 
   char *py_path = "/usr/bin";
-  char *hc_path = "/usr/local/share/hashcat";
+  char *hc_path = "./pyhashcat/pyhashcat/hashcat";
   static char *kwlist[] = {"py_path", "hc_path", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ss", kwlist, &py_path, &hc_path)) 
@@ -4421,6 +4421,43 @@ static int hashcat_setrestore_timer (hashcatObject * self, PyObject * value, voi
 }
 
 
+PyDoc_STRVAR(rp_files_cnt__doc__,
+"rp_files_cnt\tint\trp_files_cnt, count of rp_files specified\n");
+
+// getter - rp_files_cnt
+static PyObject *hashcat_getrp_files_cnt (hashcatObject * self)
+{
+
+  return Py_BuildValue ("i", self->user_options->rp_files_cnt);
+
+}
+
+// setter - rp_files_cnt
+static int hashcat_setrp_files_cnt (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete rp_files_cnt attribute");
+    return -1;
+  }
+
+  if (!PyInt_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The rp_files_cnt attribute value must be a int");
+    return -1;
+  }
+
+  Py_INCREF (value);
+  self->user_options->rp_files_cnt = PyInt_AsLong (value);
+
+  return 0;
+
+}
+
+
 PyDoc_STRVAR(rp_gen__doc__,
 "rp_gen\tint\tGenerate X random rules\n\n");
 
@@ -5387,6 +5424,7 @@ static PyGetSetDef hashcat_getseters[] = {
   {"restore_disable", (getter) hashcat_getrestore_disable, (setter) hashcat_setrestore_disable, restore_disable__doc__, NULL},
   {"restore_file_path", (getter) hashcat_getrestore_file_path, (setter) hashcat_setrestore_file_path, restore_file_path__doc__, NULL},
   {"restore_timer", (getter) hashcat_getrestore_timer, (setter) hashcat_setrestore_timer, restore_timer__doc__, NULL},
+  {"rp_files_cnt", (getter) hashcat_getrp_files_cnt, (setter) hashcat_setrp_files_cnt, rp_files_cnt__doc__, NULL},
   {"rp_gen", (getter) hashcat_getrp_gen, (setter) hashcat_setrp_gen, rp_gen__doc__, NULL},
   {"rp_gen_func_max", (getter) hashcat_getrp_gen_func_max, (setter) hashcat_setrp_gen_func_max, rp_gen_func_max__doc__, NULL},
   {"rp_gen_func_min", (getter) hashcat_getrp_gen_func_min, (setter) hashcat_setrp_gen_func_min, rp_gen_func_min__doc__, NULL},
