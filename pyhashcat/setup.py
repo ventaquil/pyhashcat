@@ -10,7 +10,7 @@ import os
 import sys
 
 hc_lib_path = '/usr/local/lib'
-hc_lib = None
+hc_lib = 'libhashcat.so' 
 try:
 	files = os.listdir(hc_lib_path)
 	for file_ in files:
