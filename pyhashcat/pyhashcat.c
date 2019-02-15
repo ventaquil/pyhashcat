@@ -4451,7 +4451,7 @@ static int hashcat_setrp_files_cnt (hashcatObject * self, PyObject * value, void
   }
 
   Py_INCREF (value);
-  self->user_options->rp_files_cnt = PyInt_AsLong (value);
+  self->user_options->rp_files_cnt = PyLongt_AsLong (value);
 
   return 0;
 
