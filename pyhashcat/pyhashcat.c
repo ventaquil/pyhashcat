@@ -4443,7 +4443,7 @@ static int hashcat_setrp_files_cnt (hashcatObject * self, PyObject * value, void
     return -1;
   }
 
-  if (!PyInt_Check (value))
+  if (!PyLong_Check (value))
   {
 
     PyErr_SetString (PyExc_TypeError, "The rp_files_cnt attribute value must be a int");
