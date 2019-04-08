@@ -63,8 +63,8 @@ typedef struct event_handlers_t
 
 const char *event_strs[] = {
 
-//"EVENT_AUTOTUNE_FINISHED",
-//"EVENT_AUTOTUNE_STARTING",
+"EVENT_AUTOTUNE_FINISHED",
+"EVENT_AUTOTUNE_STARTING",
 "EVENT_BITMAP_INIT_POST",
 "EVENT_BITMAP_INIT_PRE",
 "EVENT_BITMAP_FINAL_OVERFLOW",
@@ -81,10 +81,10 @@ const char *event_strs[] = {
 "EVENT_HASHLIST_SORT_SALT_PRE",
 "EVENT_HASHLIST_UNIQUE_HASH_POST",
 "EVENT_HASHLIST_UNIQUE_HASH_PRE",
-//"EVENT_INNERLOOP1_FINISHED",
-//"EVENT_INNERLOOP1_STARTING",
-//"EVENT_INNERLOOP2_FINISHED",
-//"EVENT_INNERLOOP2_STARTING",
+"EVENT_INNERLOOP1_FINISHED",
+"EVENT_INNERLOOP1_STARTING",
+"EVENT_INNERLOOP2_FINISHED",
+"EVENT_INNERLOOP2_STARTING",
 "EVENT_LOG_ERROR",
 "EVENT_LOG_INFO",
 "EVENT_LOG_WARNING",
@@ -111,8 +111,8 @@ const char *event_strs[] = {
 "EVENT_POTFILE_NUM_CRACKED",
 "EVENT_POTFILE_REMOVE_PARSE_POST",
 "EVENT_POTFILE_REMOVE_PARSE_PRE",
-//"EVENT_SELFTEST_FINISHED",
-//"EVENT_SELFTEST_STARTING",
+"EVENT_SELFTEST_FINISHED",
+"EVENT_SELFTEST_STARTING",
 "EVENT_SET_KERNEL_POWER_FINAL",
 "EVENT_WORDLIST_CACHE_GENERATE",
 "EVENT_WORDLIST_CACHE_HIT",
@@ -216,8 +216,8 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
 
   switch (id)
   {
-    //case EVENT_AUTOTUNE_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_FINISHED"); break;
-    ///case EVENT_AUTOTUNE_STARTING:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_STARTING"); break;
+    case EVENT_AUTOTUNE_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_FINISHED"); break;
+    case EVENT_AUTOTUNE_STARTING:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_STARTING"); break;
     case EVENT_BITMAP_INIT_POST:                size = asprintf(&esignal, "%s", "EVENT_BITMAP_INIT_POST"); break;
     case EVENT_BITMAP_INIT_PRE:                 size = asprintf(&esignal, "%s", "EVENT_BITMAP_INIT_PRE"); break;
     case EVENT_BITMAP_FINAL_OVERFLOW:     	size = asprintf(&esignal, "%s", "EVENT_BITMAP_FINAL_OVERFLOW"); break;
@@ -234,10 +234,10 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_HASHLIST_SORT_SALT_PRE:          size = asprintf(&esignal, "%s", "EVENT_HASHLIST_SORT_SALT_PRE"); break;
     case EVENT_HASHLIST_UNIQUE_HASH_POST:       size = asprintf(&esignal, "%s", "EVENT_HASHLIST_UNIQUE_HASH_POST"); break;
     case EVENT_HASHLIST_UNIQUE_HASH_PRE:        size = asprintf(&esignal, "%s", "EVENT_HASHLIST_UNIQUE_HASH_PRE"); break;
-    //case EVENT_INNERLOOP1_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_FINISHED"); break;
-    //case EVENT_INNERLOOP1_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_STARTING"); break;
-    //case EVENT_INNERLOOP2_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_FINISHED"); break;
-    //case EVENT_INNERLOOP2_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_STARTING"); break;
+    case EVENT_INNERLOOP1_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_FINISHED"); break;
+    case EVENT_INNERLOOP1_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_STARTING"); break;
+    case EVENT_INNERLOOP2_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_FINISHED"); break;
+    case EVENT_INNERLOOP2_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_STARTING"); break;
     case EVENT_LOG_ERROR:                       size = asprintf(&esignal, "%s", "EVENT_LOG_ERROR"); break;
     case EVENT_LOG_INFO:                        size = asprintf(&esignal, "%s", "EVENT_LOG_INFO"); break;
     case EVENT_LOG_WARNING:                     size = asprintf(&esignal, "%s", "EVENT_LOG_WARNING"); break;
@@ -264,8 +264,8 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_POTFILE_NUM_CRACKED:             size = asprintf(&esignal, "%s", "EVENT_POTFILE_NUM_CRACKED"); break;
     case EVENT_POTFILE_REMOVE_PARSE_POST:       size = asprintf(&esignal, "%s", "EVENT_POTFILE_REMOVE_PARSE_POST"); break;
     case EVENT_POTFILE_REMOVE_PARSE_PRE:        size = asprintf(&esignal, "%s", "EVENT_POTFILE_REMOVE_PARSE_PRE"); break;
-    //case EVENT_SELFTEST_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_FINISHED"); break;
-    //case EVENT_SELFTEST_STARTING:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_STARTING"); break;
+    case EVENT_SELFTEST_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_FINISHED"); break;
+    case EVENT_SELFTEST_STARTING:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_STARTING"); break;
     case EVENT_SET_KERNEL_POWER_FINAL:          size = asprintf(&esignal, "%s", "EVENT_SET_KERNEL_POWER_FINAL"); break;
     case EVENT_WORDLIST_CACHE_GENERATE:         size = asprintf(&esignal, "%s", "EVENT_WORDLIST_CACHE_GENERATE"); break;
     case EVENT_WORDLIST_CACHE_HIT:              size = asprintf(&esignal, "%s", "EVENT_WORDLIST_CACHE_HIT"); break;
@@ -751,7 +751,7 @@ static PyObject *hashcat_hashcat_session_checkpoint (hashcatObject * self, PyObj
 PyDoc_STRVAR(hashcat_session_quit__doc__,
 "hashcat_session_quit -> int\n\n\
 Quit hashcat session.\n\n\
-Return 0 on success");
+Return 0 on success otherwise -1");
 
 static PyObject *hashcat_hashcat_session_quit (hashcatObject * self, PyObject * noargs)
 {
@@ -760,6 +760,44 @@ static PyObject *hashcat_hashcat_session_quit (hashcatObject * self, PyObject * 
 
   rtn = hashcat_session_quit (self->hashcat_ctx);
   return Py_BuildValue ("i", rtn);
+}
+
+PyDoc_STRVAR(hashcat_status_get_status__doc__,
+"Return status info struct as a Python dictionary\n\n");
+
+static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noargs)
+{
+  hashcat_status_t *hashcat_status = (hashcat_status_t *) hcmalloc (sizeof (hashcat_status_t));
+  const int hc_status = hashcat_get_status (self->hashcat_ctx, hashcat_status);
+  if (hc_status == 0)
+  {
+	  PyObject *testDict = PyDict_New();
+	  PyDict_SetItemString(testDict, "Session", Py_BuildValue ("s", hashcat_status->session));
+	  PyDict_SetItemString(testDict, "Progress", Py_BuildValue ("d", hashcat_status->progress_finished_percent));
+	  PyDict_SetItemString(testDict, "HC Status", Py_BuildValue ("s", hashcat_status->status_string));
+	  PyDict_SetItemString(testDict, "Total Hashes", Py_BuildValue ("i", hashcat_status->digests_cnt));
+	  PyDict_SetItemString(testDict, "Cracked Hashes", Py_BuildValue ("i", hashcat_status->digests_done));
+	  PyDict_SetItemString(testDict, "Speed All", Py_BuildValue ("s", hashcat_status->speed_sec_all));
+	  PyDict_SetItemString(testDict, "Restore Point", Py_BuildValue ("K", hashcat_status->restore_point));
+	  PyDict_SetItemString(testDict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
+
+	  PyDict_SetItemString(testDict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
+	  PyDict_SetItemString(testDict, "Running Time", Py_BuildValue ("d", hashcat_status->msec_running));
+	  hcfree (hashcat_status);
+	  return testDict;
+  }
+
+  if (hc_status == -1)
+  {
+	  hcfree (hashcat_status);
+	  return Py_BuildValue ("i", hc_status);
+  }
+
+  else
+  {
+	  hcfree (hashcat_status);
+	  return NULL;
+  }
 }
 
 PyDoc_STRVAR(status_get_device_info_cnt__doc__,
@@ -1053,18 +1091,15 @@ static PyObject *hashcat_status_get_guess_candidates_dev (hashcatObject * self, 
 }
 
 
-
 PyDoc_STRVAR(status_get_hash_name__doc__,
 "status_get_hash_name -> str\n\n\
 Return type of hash.\n\n");
 
 static PyObject *hashcat_status_get_hash_name (hashcatObject * self, PyObject * noargs)
 {
-  //int status_get_hash_name;
   const char *rtn;
 
   rtn = status_get_hash_name (self->hashcat_ctx);
-  //rtn = 1;
   return Py_BuildValue ("i", rtn);
 }
 
@@ -5285,6 +5320,7 @@ static int hashcat_setveracrypt_pim_stop (hashcatObject * self, PyObject * value
 
 }
 
+
 PyDoc_STRVAR(workload_profile__doc__,
 "workload_profile\tint\tEnable a specific workload profile, see pool below\n\n\
 REFERENCE:\n\
@@ -5342,6 +5378,7 @@ static PyMethodDef hashcat_methods[] = {
   {"hashcat_session_bypass", (PyCFunction) hashcat_hashcat_session_bypass, METH_NOARGS, hashcat_session_bypass__doc__},
   {"hashcat_session_checkpoint", (PyCFunction) hashcat_hashcat_session_checkpoint, METH_NOARGS, hashcat_session_checkpoint__doc__},
   {"hashcat_session_quit", (PyCFunction) hashcat_hashcat_session_quit, METH_NOARGS, hashcat_session_quit__doc__},
+  {"hashcat_status_get_status", (PyCFunction) hashcat_status_get_status, METH_NOARGS, hashcat_status_get_status__doc__},
   {"status_get_device_info_cnt", (PyCFunction) hashcat_status_get_device_info_cnt, METH_NOARGS, status_get_device_info_cnt__doc__},
   {"status_get_device_info_active", (PyCFunction) hashcat_status_get_device_info_active, METH_NOARGS, status_get_device_info_active__doc__},
   {"status_get_skipped_dev", (PyCFunction) hashcat_status_get_skipped_dev, METH_VARARGS, status_get_skipped_dev__doc__},
