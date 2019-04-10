@@ -26,11 +26,12 @@ pyhashcat_module = Extension('pyhashcat',
 							libraries = [hc_lib],
 							extra_link_args = ['-shared', '-Wl,-R/usr/local/lib'],
 							sources = ['pyhashcat.c'],
-							extra_compile_args=['-std=c99']
+							extra_compile_args=['-std=c99',
+                           '-Wimplicit-function-declaration']
 							)
 
 setup (name ='pyhashcat',
-	   version = '2.1',
+	   version = '2.2',
 	   description='Python bindings for hashcat',
 	   author='Rich Kelley',
 	   author_email='rk5devmail@gmail.com',

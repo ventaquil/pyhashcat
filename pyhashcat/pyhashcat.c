@@ -63,10 +63,11 @@ typedef struct event_handlers_t
 
 const char *event_strs[] = {
 
-"EVENT_AUTOTUNE_FINISHED",
-"EVENT_AUTOTUNE_STARTING",
+//"EVENT_AUTOTUNE_FINISHED",
+//"EVENT_AUTOTUNE_STARTING",
 "EVENT_BITMAP_INIT_POST",
 "EVENT_BITMAP_INIT_PRE",
+"EVENT_BITMAP_FINAL_OVERFLOW",
 "EVENT_CALCULATED_WORDS_BASE",
 "EVENT_CRACKER_FINISHED",
 "EVENT_CRACKER_HASH_CRACKED",
@@ -80,10 +81,10 @@ const char *event_strs[] = {
 "EVENT_HASHLIST_SORT_SALT_PRE",
 "EVENT_HASHLIST_UNIQUE_HASH_POST",
 "EVENT_HASHLIST_UNIQUE_HASH_PRE",
-"EVENT_INNERLOOP1_FINISHED",
-"EVENT_INNERLOOP1_STARTING",
-"EVENT_INNERLOOP2_FINISHED",
-"EVENT_INNERLOOP2_STARTING",
+//"EVENT_INNERLOOP1_FINISHED",
+//"EVENT_INNERLOOP1_STARTING",
+//"EVENT_INNERLOOP2_FINISHED",
+//"EVENT_INNERLOOP2_STARTING",
 "EVENT_LOG_ERROR",
 "EVENT_LOG_INFO",
 "EVENT_LOG_WARNING",
@@ -95,8 +96,12 @@ const char *event_strs[] = {
 "EVENT_MONITOR_THROTTLE2",
 "EVENT_MONITOR_THROTTLE3",
 "EVENT_MONITOR_PERFORMANCE_HINT",
+"EVENT_MONITOR_NOINPUT_HINT",
+"EVENT_MONITOR_NOINPUT_ABORT",
 "EVENT_OPENCL_SESSION_POST",
 "EVENT_OPENCL_SESSION_PRE",
+"EVENT_OPENCL_DEVICE_INIT_POST",
+"EVENT_OPENCL_DEVICE_INIT_PRE",
 "EVENT_OUTERLOOP_FINISHED",
 "EVENT_OUTERLOOP_MAINSCREEN",
 "EVENT_OUTERLOOP_STARTING",
@@ -106,8 +111,8 @@ const char *event_strs[] = {
 "EVENT_POTFILE_NUM_CRACKED",
 "EVENT_POTFILE_REMOVE_PARSE_POST",
 "EVENT_POTFILE_REMOVE_PARSE_PRE",
-"EVENT_SELFTEST_FINISHED",
-"EVENT_SELFTEST_STARTING",
+//"EVENT_SELFTEST_FINISHED",
+//"EVENT_SELFTEST_STARTING",
 "EVENT_SET_KERNEL_POWER_FINAL",
 "EVENT_WORDLIST_CACHE_GENERATE",
 "EVENT_WORDLIST_CACHE_HIT",
@@ -211,10 +216,11 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
 
   switch (id)
   {
-    case EVENT_AUTOTUNE_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_FINISHED"); break;
-    case EVENT_AUTOTUNE_STARTING:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_STARTING"); break;
+    //case EVENT_AUTOTUNE_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_FINISHED"); break;
+    ///case EVENT_AUTOTUNE_STARTING:               size = asprintf(&esignal, "%s", "EVENT_AUTOTUNE_STARTING"); break;
     case EVENT_BITMAP_INIT_POST:                size = asprintf(&esignal, "%s", "EVENT_BITMAP_INIT_POST"); break;
     case EVENT_BITMAP_INIT_PRE:                 size = asprintf(&esignal, "%s", "EVENT_BITMAP_INIT_PRE"); break;
+    case EVENT_BITMAP_FINAL_OVERFLOW:     	size = asprintf(&esignal, "%s", "EVENT_BITMAP_FINAL_OVERFLOW"); break;
     case EVENT_CALCULATED_WORDS_BASE:           size = asprintf(&esignal, "%s", "EVENT_CALCULATED_WORDS_BASE"); break;
     case EVENT_CRACKER_FINISHED:                size = asprintf(&esignal, "%s", "EVENT_CRACKER_FINISHED"); break;
     case EVENT_CRACKER_HASH_CRACKED:            size = asprintf(&esignal, "%s", "EVENT_CRACKER_HASH_CRACKED"); break;
@@ -228,10 +234,10 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_HASHLIST_SORT_SALT_PRE:          size = asprintf(&esignal, "%s", "EVENT_HASHLIST_SORT_SALT_PRE"); break;
     case EVENT_HASHLIST_UNIQUE_HASH_POST:       size = asprintf(&esignal, "%s", "EVENT_HASHLIST_UNIQUE_HASH_POST"); break;
     case EVENT_HASHLIST_UNIQUE_HASH_PRE:        size = asprintf(&esignal, "%s", "EVENT_HASHLIST_UNIQUE_HASH_PRE"); break;
-    case EVENT_INNERLOOP1_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_FINISHED"); break;
-    case EVENT_INNERLOOP1_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_STARTING"); break;
-    case EVENT_INNERLOOP2_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_FINISHED"); break;
-    case EVENT_INNERLOOP2_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_STARTING"); break;
+    //case EVENT_INNERLOOP1_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_FINISHED"); break;
+    //case EVENT_INNERLOOP1_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP1_STARTING"); break;
+    //case EVENT_INNERLOOP2_FINISHED:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_FINISHED"); break;
+    //case EVENT_INNERLOOP2_STARTING:             size = asprintf(&esignal, "%s", "EVENT_INNERLOOP2_STARTING"); break;
     case EVENT_LOG_ERROR:                       size = asprintf(&esignal, "%s", "EVENT_LOG_ERROR"); break;
     case EVENT_LOG_INFO:                        size = asprintf(&esignal, "%s", "EVENT_LOG_INFO"); break;
     case EVENT_LOG_WARNING:                     size = asprintf(&esignal, "%s", "EVENT_LOG_WARNING"); break;
@@ -243,8 +249,12 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_MONITOR_THROTTLE2:               size = asprintf(&esignal, "%s", "EVENT_MONITOR_THROTTLE2"); break;
     case EVENT_MONITOR_THROTTLE3:               size = asprintf(&esignal, "%s", "EVENT_MONITOR_THROTTLE3"); break;
     case EVENT_MONITOR_PERFORMANCE_HINT:        size = asprintf(&esignal, "%s", "EVENT_MONITOR_PERFORMANCE_HINT"); break;
+    case EVENT_MONITOR_NOINPUT_HINT:            size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_HINT"); break;
+    case EVENT_MONITOR_NOINPUT_ABORT:           size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_ABORT"); break;
     case EVENT_OPENCL_SESSION_POST:             size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_POST"); break;
     case EVENT_OPENCL_SESSION_PRE:              size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
+    case EVENT_OPENCL_DEVICE_INIT_POST:         size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
+    case EVENT_OPENCL_DEVICE_INIT_PRE:          size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
     case EVENT_OUTERLOOP_FINISHED:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_FINISHED"); break;
     case EVENT_OUTERLOOP_MAINSCREEN:            size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_MAINSCREEN"); break;
     case EVENT_OUTERLOOP_STARTING:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_STARTING"); break;
@@ -254,8 +264,8 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_POTFILE_NUM_CRACKED:             size = asprintf(&esignal, "%s", "EVENT_POTFILE_NUM_CRACKED"); break;
     case EVENT_POTFILE_REMOVE_PARSE_POST:       size = asprintf(&esignal, "%s", "EVENT_POTFILE_REMOVE_PARSE_POST"); break;
     case EVENT_POTFILE_REMOVE_PARSE_PRE:        size = asprintf(&esignal, "%s", "EVENT_POTFILE_REMOVE_PARSE_PRE"); break;
-    case EVENT_SELFTEST_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_FINISHED"); break;
-    case EVENT_SELFTEST_STARTING:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_STARTING"); break;
+    //case EVENT_SELFTEST_FINISHED:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_FINISHED"); break;
+    //case EVENT_SELFTEST_STARTING:               size = asprintf(&esignal, "%s", "EVENT_SELFTEST_STARTING"); break;
     case EVENT_SET_KERNEL_POWER_FINAL:          size = asprintf(&esignal, "%s", "EVENT_SET_KERNEL_POWER_FINAL"); break;
     case EVENT_WORDLIST_CACHE_GENERATE:         size = asprintf(&esignal, "%s", "EVENT_WORDLIST_CACHE_GENERATE"); break;
     case EVENT_WORDLIST_CACHE_HIT:              size = asprintf(&esignal, "%s", "EVENT_WORDLIST_CACHE_HIT"); break;
@@ -441,7 +451,6 @@ static void *hc_session_exe_thread(void *params)
 {
 
  hashcatObject *self = (hashcatObject *) params;
-
  int rtn;
  rtn = hashcat_session_execute(self->hashcat_ctx);
 
@@ -460,8 +469,8 @@ Return 0 on successful thread creation, pthread error number otherwise");
 static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject * args, PyObject * kwargs)
 {
 
-  char *py_path = "/usr/bin";
-  char *hc_path = "./pyhashcat/pyhashcat/hashcat";
+  char *py_path = "/usr/bin/";
+  char *hc_path = "/usr/local/share/hashcat";
   static char *kwlist[] = {"py_path", "hc_path", NULL};
 
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|ss", kwlist, &py_path, &hc_path))
@@ -598,7 +607,8 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
       hc_argv[3] = NULL;
       self->user_options->hc_argc = self->hc_argc;
       self->user_options->hc_argv = hc_argv;
-
+      //added debug print***
+      printf("%d\n",self->user_options->hash_mode);
       break;
 
       // 7 | Hybrid mask dict
@@ -1042,18 +1052,23 @@ static PyObject *hashcat_status_get_guess_candidates_dev (hashcatObject * self, 
   return Py_BuildValue ("s", rtn);
 }
 
-PyDoc_STRVAR(status_get_hash_type__doc__,
-"status_get_hash_type -> str\n\n\
+
+
+PyDoc_STRVAR(status_get_hash_name__doc__,
+"status_get_hash_name -> str\n\n\
 Return type of hash.\n\n");
 
-static PyObject *hashcat_status_get_hash_type (hashcatObject * self, PyObject * noargs)
+static PyObject *hashcat_status_get_hash_name (hashcatObject * self, PyObject * noargs)
 {
-
+  //int status_get_hash_name;
   const char *rtn;
 
-  rtn = status_get_hash_type (self->hashcat_ctx);
-  return Py_BuildValue ("s", rtn);
+  rtn = status_get_hash_name (self->hashcat_ctx);
+  //rtn = 1;
+  return Py_BuildValue ("i", rtn);
 }
+
+
 
 PyDoc_STRVAR(status_get_hash_target__doc__,
 "status_get_hash_target -> str\n\n\
@@ -2451,68 +2466,68 @@ static int hashcat_setforce (hashcatObject * self, PyObject * value, void *closu
 }
 
 
-PyDoc_STRVAR(gpu_temp_abort__doc__,
-"gpu_temp_abort\tint\tAbort if GPU temperature reaches X degrees celsius\n\n");
+PyDoc_STRVAR(hwmon_temp_abort__doc__,
+"hwmon_temp_abort\tint\tAbort if GPU temperature reaches X degrees celsius\n\n");
 
-// getter - gpu_temp_abort
-static PyObject *hashcat_getgpu_temp_abort (hashcatObject * self)
+// getter - hwmon_temp_abort
+static PyObject *hashcat_gethwmon_temp_abort (hashcatObject * self)
 {
 
-  return Py_BuildValue ("i", self->user_options->gpu_temp_abort);
+  return Py_BuildValue ("i", self->user_options->hwmon_temp_abort);
 
 }
 
-// setter - gpu_temp_abort
-static int hashcat_setgpu_temp_abort (hashcatObject * self, PyObject * value, void *closure)
+// setter - hwmon_temp_abort
+static int hashcat_sethwmon_temp_abort (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete gpu_temp_abort attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete hwmon_temp_abort attribute");
     return -1;
   }
 
   if (!PyLong_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The gpu_temp_abort attribute value must be a int");
+    PyErr_SetString (PyExc_TypeError, "The hwmon_temp_abort attribute value must be a int");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->gpu_temp_abort = PyLong_AsLong (value);
+  self->user_options->hwmon_temp_abort = PyLong_AsLong (value);
 
   return 0;
 
 }
 
-PyDoc_STRVAR(gpu_temp_disable__doc__,
-"gpu_temp_disable\tbool\tDisable temperature and fanspeed reads and triggers\n\n");
+PyDoc_STRVAR(hwmon_disable__doc__,
+"hwmon_disable\tbool\tDisable temperature and fanspeed reads and triggers\n\n");
 
-// getter - gpu_temp_disable
-static PyObject *hashcat_getgpu_temp_disable (hashcatObject * self)
+// getter - hwmon_disable
+static PyObject *hashcat_gethwmon_disable (hashcatObject * self)
 {
 
-  return PyBool_FromLong (self->user_options->gpu_temp_disable);
+  return PyBool_FromLong (self->user_options->hwmon_disable);
 
 }
 
-// setter - gpu_temp_disable
-static int hashcat_setgpu_temp_disable (hashcatObject * self, PyObject * value, void *closure)
+// setter - hwmon_disable
+static int hashcat_sethwmon_disable (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete gpu_temp_disable attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete hwmon_disable attribute");
     return -1;
   }
 
   if (!PyBool_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The gpu_temp_disable attribute value must be a bool");
+    PyErr_SetString (PyExc_TypeError, "The hwmon_disable attribute value must be a bool");
     return -1;
   }
 
@@ -2520,14 +2535,14 @@ static int hashcat_setgpu_temp_disable (hashcatObject * self, PyObject * value, 
   {
 
     Py_INCREF (value);
-    self->user_options->gpu_temp_disable = 1;
+    self->user_options->hwmon_disable = 1;
 
   }
   else
   {
 
     Py_INCREF (value);
-    self->user_options->gpu_temp_disable = 0;
+    self->user_options->hwmon_disable = 0;
 
   }
 
@@ -3410,43 +3425,43 @@ static int hashcat_setmarkov_disable (hashcatObject * self, PyObject * value, vo
 
 }
 
-PyDoc_STRVAR(markov_hcstat__doc__,
-"markov_hcstat\tstr\tSpecify hcstat file to use\n\n");
+PyDoc_STRVAR(markov_hcstat2__doc__,
+"markov_hcstat2\tstr\tSpecify hcstat file to use\n\n");
 
-// getter - markov_hcstat
-static PyObject *hashcat_getmarkov_hcstat (hashcatObject * self)
+// getter - markov_hcstat2
+static PyObject *hashcat_getmarkov_hcstat2 (hashcatObject * self)
 {
 
-  if (self->user_options->markov_hcstat == NULL)
+  if (self->user_options->markov_hcstat2 == NULL)
   {
     Py_INCREF (Py_None);
     return Py_None;
   }
 
-  return Py_BuildValue ("s", self->user_options->markov_hcstat);
+  return Py_BuildValue ("s", self->user_options->markov_hcstat2);
 
 }
 
-// setter - markov_hcstat
-static int hashcat_setmarkov_hcstat (hashcatObject * self, PyObject * value, void *closure)
+// setter - markov_hcstat2
+static int hashcat_setmarkov_hcstat2 (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete markov_hcstat attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete markov_hcstat2 attribute");
     return -1;
   }
 
   if (!PyUnicode_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The markov_hcstat attribute value must be a string");
+    PyErr_SetString (PyExc_TypeError, "The markov_hcstat2 attribute value must be a string");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->markov_hcstat = PyUnicode_AsUTF8 (value);
+  self->user_options->markov_hcstat2 = PyUnicode_AsUTF8 (value);
 
   return 0;
 
@@ -3488,37 +3503,37 @@ static int hashcat_setmarkov_threshold (hashcatObject * self, PyObject * value, 
 
 }
 
-PyDoc_STRVAR(nvidia_spin_damp__doc__,
-"nvidia_spin_damp\tint\tWorkaround NVidias CPU burning loop bug, in percent\n\n");
+PyDoc_STRVAR(spin_damp__doc__,
+"spin_damp\tint\tWorkaround NVidias CPU burning loop bug, in percent\n\n");
 
-// getter - nvidia_spin_damp
-static PyObject *hashcat_getnvidia_spin_damp (hashcatObject * self)
+// getter - spin_damp
+static PyObject *hashcat_getspin_damp (hashcatObject * self)
 {
 
-  return Py_BuildValue ("i", self->user_options->nvidia_spin_damp);
+  return Py_BuildValue ("i", self->user_options->spin_damp);
 
 }
 
-// setter - nvidia_spin_damp
-static int hashcat_setnvidia_spin_damp (hashcatObject * self, PyObject * value, void *closure)
+// setter - spin_damp
+static int hashcat_setspin_damp (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete nvidia_spin_damp attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete spin_damp attribute");
     return -1;
   }
 
   if (!PyLong_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The nvidia_spin_damp attribute value must be a int");
+    PyErr_SetString (PyExc_TypeError, "The spin_damp attribute value must be a int");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->nvidia_spin_damp = PyLong_AsLong (value);
+  self->user_options->spin_damp = PyLong_AsLong (value);
 
   return 0;
 
@@ -5197,43 +5212,78 @@ static int hashcat_setveracrypt_keyfiles (hashcatObject * self, PyObject * value
 
 }
 
-PyDoc_STRVAR(veracrypt_pim__doc__,
-"veracrypt_pim\tint\tVeraCrypt personal iterations multiplier\n\n");
+PyDoc_STRVAR(veracrypt_pim_start__doc__,
+"veracrypt_pim\tint\tVeraCrypt personal iterations multiplier start\n\n");
 
-// getter - veracrypt_pim
-static PyObject *hashcat_getveracrypt_pim (hashcatObject * self)
+// getter - veracrypt_pim_start
+static PyObject *hashcat_getveracrypt_pim_start (hashcatObject * self)
 {
 
-  return Py_BuildValue ("i", self->user_options->veracrypt_pim);
+  return Py_BuildValue ("i", self->user_options->veracrypt_pim_start);
 
 }
 
-// setter - veracrypt_pim
-static int hashcat_setveracrypt_pim (hashcatObject * self, PyObject * value, void *closure)
+// setter - veracrypt_pim_start
+static int hashcat_setveracrypt_pim_start (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete veracrypt_pim attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete veracrypt_pim_start attribute");
     return -1;
   }
 
   if (!PyLong_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The veracrypt_pim attribute value must be a int");
+    PyErr_SetString (PyExc_TypeError, "The veracrypt_pim_start attribute value must be a int");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->veracrypt_pim = PyLong_AsLong (value);
+  self->user_options->veracrypt_pim_start = PyLong_AsLong (value);
 
   return 0;
 
 }
 
 
+PyDoc_STRVAR(veracrypt_pim_stop__doc__,
+"veracrypt_pim\tint\tVeraCrypt personal iterations multiplier stop\n\n");
+
+// getter - veracrypt_pim_stop
+static PyObject *hashcat_getveracrypt_pim_stop (hashcatObject * self)
+{
+
+  return Py_BuildValue ("i", self->user_options->veracrypt_pim_stop);
+
+}
+
+// setter - veracrypt_pim_stop
+static int hashcat_setveracrypt_pim_stop (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete veracrypt_pim_stop attribute");
+    return -1;
+  }
+
+  if (!PyLong_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The veracrypt_pim_stop attribute value must be a int");
+    return -1;
+  }
+
+  Py_INCREF (value);
+  self->user_options->veracrypt_pim_stop = PyLong_AsLong (value);
+
+  return 0;
+
+}
 
 PyDoc_STRVAR(workload_profile__doc__,
 "workload_profile\tint\tEnable a specific workload profile, see pool below\n\n\
@@ -5310,7 +5360,7 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_guess_charset", (PyCFunction) hashcat_status_get_guess_charset, METH_NOARGS, status_get_guess_charset__doc__},
   {"status_get_guess_mask_length", (PyCFunction) hashcat_status_get_guess_mask_length, METH_NOARGS, status_get_guess_mask_length__doc__},
   {"status_get_guess_candidates_dev", (PyCFunction) hashcat_status_get_guess_candidates_dev, METH_VARARGS, status_get_guess_candidates_dev__doc__},
-  {"status_get_hash_type", (PyCFunction) hashcat_status_get_hash_type, METH_NOARGS, status_get_hash_type__doc__},
+  {"status_get_hash_name", (PyCFunction) hashcat_status_get_hash_name, METH_NOARGS, status_get_hash_name__doc__},
   {"status_get_hash_target", (PyCFunction) hashcat_status_get_hash_target, METH_NOARGS, status_get_hash_target__doc__},
   {"status_get_digests_done", (PyCFunction) hashcat_status_get_digests_done, METH_NOARGS, status_get_digests_done__doc__},
   {"status_get_digests_cnt", (PyCFunction) hashcat_status_get_digests_cnt, METH_NOARGS, status_get_digests_cnt__doc__},
@@ -5381,8 +5431,8 @@ static PyGetSetDef hashcat_getseters[] = {
   {"debug_file", (getter) hashcat_getdebug_file, (setter) hashcat_setdebug_file, debug_file__doc__, NULL},
   {"debug_mode", (getter) hashcat_getdebug_mode, (setter) hashcat_setdebug_mode, debug_mode__doc__, NULL},
   {"force", (getter) hashcat_getforce, (setter) hashcat_setforce, force__doc__, NULL},
-  {"gpu_temp_abort", (getter) hashcat_getgpu_temp_abort, (setter) hashcat_setgpu_temp_abort, gpu_temp_abort__doc__, NULL},
-  {"gpu_temp_disable", (getter) hashcat_getgpu_temp_disable, (setter) hashcat_setgpu_temp_disable, gpu_temp_disable__doc__, NULL},
+  {"hwmon_temp_abort", (getter) hashcat_gethwmon_temp_abort, (setter) hashcat_sethwmon_temp_abort, hwmon_temp_abort__doc__, NULL},
+  {"hwmon_disable", (getter) hashcat_gethwmon_disable, (setter) hashcat_sethwmon_disable, hwmon_disable__doc__, NULL},
   {"hash_mode", (getter) hashcat_gethash_mode, (setter) hashcat_sethash_mode, hash_mode__doc__, NULL},
   {"hex_charset", (getter) hashcat_gethex_charset, (setter) hashcat_sethex_charset, hex_charset__doc__, NULL},
   {"hex_salt", (getter) hashcat_gethex_salt, (setter) hashcat_sethex_salt, hex_salt__doc__, NULL},
@@ -5402,9 +5452,9 @@ static PyGetSetDef hashcat_getseters[] = {
   {"machine_readable", (getter) hashcat_getmachine_readable, (setter) hashcat_setmachine_readable, machine_readable__doc__, NULL},
   {"markov_classic", (getter) hashcat_getmarkov_classic, (setter) hashcat_setmarkov_classic, markov_classic__doc__, NULL},
   {"markov_disable", (getter) hashcat_getmarkov_disable, (setter) hashcat_setmarkov_disable, markov_disable__doc__, NULL},
-  {"markov_hcstat", (getter) hashcat_getmarkov_hcstat, (setter) hashcat_setmarkov_hcstat, markov_hcstat__doc__, NULL},
+  {"markov_hcstat2", (getter) hashcat_getmarkov_hcstat2, (setter) hashcat_setmarkov_hcstat2, markov_hcstat2__doc__, NULL},
   {"markov_threshold", (getter) hashcat_getmarkov_threshold, (setter) hashcat_setmarkov_threshold, markov_threshold__doc__, NULL},
-  {"nvidia_spin_damp", (getter) hashcat_getnvidia_spin_damp, (setter) hashcat_setnvidia_spin_damp, nvidia_spin_damp__doc__, NULL},
+  {"spin_damp", (getter) hashcat_getspin_damp, (setter) hashcat_setspin_damp, spin_damp__doc__, NULL},
   {"opencl_device_types", (getter) hashcat_getopencl_device_types, (setter) hashcat_setopencl_device_types, opencl_device_types__doc__, NULL},
   {"opencl_devices", (getter) hashcat_getopencl_devices, (setter) hashcat_setopencl_devices, opencl_devices__doc__, NULL},
   {"opencl_info", (getter) hashcat_getopencl_info, (setter) hashcat_setopencl_info, opencl_info__doc__, NULL},
@@ -5441,11 +5491,12 @@ static PyGetSetDef hashcat_getseters[] = {
   {"skip", (getter) hashcat_getskip, (setter) hashcat_setskip, skip__doc__, NULL},
   {"speed_only", (getter) hashcat_getspeed_only, (setter) hashcat_setspeed_only, speed_only__doc__, NULL},
   {"progress_only", (getter) hashcat_getprogress_only, (setter) hashcat_setprogress_only, progress_only__doc__, NULL},
-  // {"stdout_flag", (getter)hashcat_getstdout_flag, (setter)hashcat_setstdout_flag, stdout_flag__doc__, NULL },
+//   {"stdout_flag", (getter)hashcat_getstdout_flag, (setter)hashcat_setstdout_flag, stdout_flag__doc__, NULL },
   {"truecrypt_keyfiles", (getter) hashcat_gettruecrypt_keyfiles, (setter) hashcat_settruecrypt_keyfiles, truecrypt_keyfiles__doc__, NULL},
   {"username", (getter) hashcat_getusername, (setter) hashcat_setusername, username__doc__, NULL},
   {"veracrypt_keyfiles", (getter) hashcat_getveracrypt_keyfiles, (setter) hashcat_setveracrypt_keyfiles, veracrypt_keyfiles__doc__, NULL},
-  {"veracrypt_pim", (getter) hashcat_getveracrypt_pim, (setter) hashcat_setveracrypt_pim, veracrypt_pim__doc__, NULL},
+  {"veracrypt_pim_start", (getter) hashcat_getveracrypt_pim_start, (setter) hashcat_setveracrypt_pim_start, veracrypt_pim_start__doc__, NULL},
+  {"veracrypt_pim_stop", (getter) hashcat_getveracrypt_pim_stop, (setter) hashcat_setveracrypt_pim_stop, veracrypt_pim_stop__doc__, NULL},
   {"workload_profile", (getter) hashcat_getworkload_profile, (setter) hashcat_setworkload_profile, workload_profile__doc__, NULL},
   {NULL}
 
