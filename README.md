@@ -10,7 +10,7 @@ and ported to Python v3 here: https://github.com/initiate6/pyhashcat/tree/master
 
 pyhashcat has been completely rewritten as a Python C extension to interface directly with libhashcat. The pyhashcat module now acts as direct bindings to hashcat.
 
-VERSION: 2.2
+VERSION: 3.0
 
 
 Requirements: 
