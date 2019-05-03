@@ -607,8 +607,6 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
       hc_argv[3] = NULL;
       self->user_options->hc_argc = self->hc_argc;
       self->user_options->hc_argv = hc_argv;
-      //added debug print***
-      printf("%d\n",self->user_options->hash_mode);
       break;
 
       // 7 | Hybrid mask dict
@@ -771,20 +769,19 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
   const int hc_status = hashcat_get_status (self->hashcat_ctx, hashcat_status);
   if (hc_status == 0)
   {
-	  PyObject *testDict = PyDict_New();
-	  PyDict_SetItemString(testDict, "Session", Py_BuildValue ("s", hashcat_status->session));
-	  PyDict_SetItemString(testDict, "Progress", Py_BuildValue ("d", hashcat_status->progress_finished_percent));
-	  PyDict_SetItemString(testDict, "HC Status", Py_BuildValue ("s", hashcat_status->status_string));
-	  PyDict_SetItemString(testDict, "Total Hashes", Py_BuildValue ("i", hashcat_status->digests_cnt));
-	  PyDict_SetItemString(testDict, "Cracked Hashes", Py_BuildValue ("i", hashcat_status->digests_done));
-	  PyDict_SetItemString(testDict, "Speed All", Py_BuildValue ("s", hashcat_status->speed_sec_all));
-	  PyDict_SetItemString(testDict, "Restore Point", Py_BuildValue ("K", hashcat_status->restore_point));
-	  PyDict_SetItemString(testDict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
-
-	  PyDict_SetItemString(testDict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
-	  PyDict_SetItemString(testDict, "Running Time", Py_BuildValue ("d", hashcat_status->msec_running));
+	  PyObject *stat_dict = PyDict_New();
+	  PyDict_SetItemString(stat_dict, "Session", Py_BuildValue ("s", hashcat_status->session));
+	  PyDict_SetItemString(stat_dict, "Progress", Py_BuildValue ("d", hashcat_status->progress_finished_percent));
+	  PyDict_SetItemString(stat_dict, "HC Status", Py_BuildValue ("s", hashcat_status->status_string));
+	  PyDict_SetItemString(stat_dict, "Total Hashes", Py_BuildValue ("i", hashcat_status->digests_cnt));
+	  PyDict_SetItemString(stat_dict, "Cracked Hashes", Py_BuildValue ("i", hashcat_status->digests_done));
+	  PyDict_SetItemString(stat_dict, "Speed All", Py_BuildValue ("s", hashcat_status->speed_sec_all));
+	  PyDict_SetItemString(stat_dict, "Restore Point", Py_BuildValue ("K", hashcat_status->restore_point));
+	  PyDict_SetItemString(stat_dict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
+	  PyDict_SetItemString(stat_dict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
+	  PyDict_SetItemString(stat_dict, "Running Time", Py_BuildValue ("d", hashcat_status->msec_running));
 	  hcfree (hashcat_status);
-	  return testDict;
+	  return stat_dict;
   }
 
   if (hc_status == -1)
@@ -1102,7 +1099,6 @@ static PyObject *hashcat_status_get_hash_name (hashcatObject * self, PyObject * 
   rtn = status_get_hash_name (self->hashcat_ctx);
   return Py_BuildValue ("i", rtn);
 }
-
 
 
 PyDoc_STRVAR(status_get_hash_target__doc__,
@@ -4883,6 +4879,356 @@ static int hashcat_setseparator(hashcatObject * self, PyObject * value, void *cl
 
 }
 
+#ifdef WITH_BRAIN
+PyDoc_STRVAR(brain_client__doc__,
+"brain_client -> bool\n\n\
+Get/set brain client mode.\n\n");
+
+//getter brain_client
+static PyObject *hashcat_getbrain_client(hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->brain_client);
+
+}
+
+//setter brain_client
+static int hashcat_setbrain_client(hashcatObject * self, PyObject * value, void *closure)
+{
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain client attribute");
+    return -1;
+
+  }
+  if (!PyBool_Check (value))
+  {
+    PyErr_SetString (PyExc_TypeError, "The brain client attribute value must be bool");
+    return -1;
+
+  }
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->brain_client = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->brain_client = 0;
+
+  }
+
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_server__doc__,
+"brain_server -> bool\n\n\
+Get/set brain server mode.\n\n");
+
+//getter brain_server
+static PyObject *hashcat_getbrain_server(hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->brain_server);
+
+}
+
+//setter brain_server
+static int hashcat_setbrain_server(hashcatObject * self, PyObject * value, void *closure)
+{
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain server attribute");
+    return -1;
+
+  }
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain server attribute value must be bool");
+    return -1;
+
+  }
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->brain_server = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->brain_server = 0;
+
+  }
+
+  return 0;
+}
+
+
+PyDoc_STRVAR(brain_host__doc__,
+"brain_host -> str\n\n\
+Get/set brain server host IP address.\n\n");
+
+// getter - brain_host
+static PyObject *hashcat_getbrain_host (hashcatObject * self)
+{
+
+  if (self->user_options->brain_host == NULL)
+  {
+
+    Py_INCREF (Py_None);
+    return Py_None;
+
+  }
+  return Py_BuildValue ("s", self->user_options->brain_host);
+
+}
+
+// setter - brain_host
+static int hashcat_setbrain_host (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain host attribute");
+    return -1;
+
+  }
+  if (!PyUnicode_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain host attribute value must be a string");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_host = PyUnicode_AsUTF8 (value);
+
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_port__doc__,
+"brain_port -> int\n\n\
+Get/set brain server TCP port number.\n\n");
+
+//getter brain_port
+static PyObject *hashcat_getbrain_port(hashcatObject * self)
+{
+
+  return Py_BuildValue ("i", self->user_options->brain_port);
+
+}
+
+//setter brain_port
+static int hashcat_setbrain_port(hashcatObject * self, PyObject * value, void *closure)
+{
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain port attribute");
+    return -1
+	    ;
+  }
+  if (!PyLong_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain port attribute value must be u32");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_port = PyLong_AsLong(value);
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_session__doc__,
+"brain_session-> int\n\n\
+Get/set brain session.\n\n");
+
+//getter brain_session
+static PyObject *hashcat_getbrain_session(hashcatObject * self)
+{
+
+  return Py_BuildValue ("i", self->user_options->brain_session);
+
+}
+
+//setter brain_session
+static int hashcat_setbrain_session(hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain session attribute");
+    return -1;
+
+  }
+  if (!PyLong_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain session attribute value must be u32");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_session = PyLong_AsLong(value);
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_features__doc__,
+"brain_client_features-> int\n\n\
+Get/set brain client features.\n\n");
+//getter brain_client_features
+static PyObject *hashcat_getbrain_features(hashcatObject * self)
+{
+
+  return Py_BuildValue ("i", self->user_options->brain_client_features);
+
+}
+
+//setter brain_session
+static int hashcat_setbrain_features(hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain client features attribute");
+    return -1;
+
+  }
+  if (!PyLong_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain client features attribute value must be u32");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_client_features = PyLong_AsLong(value);
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_password__doc__,
+"brain_password -> str\n\n\
+Get/set brain password.\n\n");
+
+// getter - brain_password
+static PyObject *hashcat_getbrain_password (hashcatObject * self)
+{
+
+  if (self->user_options->brain_password == NULL)
+  {
+
+    Py_INCREF (Py_None);
+    return Py_None;
+
+  }
+  return Py_BuildValue ("s", self->user_options->brain_password);
+
+}
+
+// setter - brain_password
+static int hashcat_setbrain_password (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain password attribute");
+    return -1;
+
+  }
+  if (!PyUnicode_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain password attribute value must be a string");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_password = PyUnicode_AsUTF8 (value);
+
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(brain_session_whitelist__doc__,
+"brain_session_whitelist -> str\n\n\
+Get/set brain session whitelist.\n\n");
+
+// getter - brain_session_whitelist
+static PyObject *hashcat_getbrain_session_whitelist (hashcatObject * self)
+{
+
+  if (self->user_options->brain_session_whitelist == NULL)
+  {
+
+    Py_INCREF (Py_None);
+    return Py_None;
+
+  }
+
+  return Py_BuildValue ("s", self->user_options->brain_session_whitelist);
+
+}
+
+// setter - brain_session_whitelist
+static int hashcat_setbrain_session_whitelist (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete brain session_whitelist attribute");
+    return -1;
+
+  }
+  if (!PyUnicode_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The brain session_whitelist attribute value must be a string");
+    return -1;
+
+  }
+
+  Py_INCREF (value);
+  self->user_options->brain_session_whitelist = PyUnicode_AsUTF8 (value);
+
+  return 0;
+
+}
+
+#endif
+
+
 PyDoc_STRVAR(session__doc__,
 "session\tstr\tDefine specific session name\n\n");
 
@@ -5198,8 +5544,6 @@ static int hashcat_setusername (hashcatObject * self, PyObject * value, void *cl
     self->user_options->username = 0;
 
   }
-
-
 
   return 0;
 
@@ -5535,8 +5879,17 @@ static PyGetSetDef hashcat_getseters[] = {
   {"veracrypt_pim_start", (getter) hashcat_getveracrypt_pim_start, (setter) hashcat_setveracrypt_pim_start, veracrypt_pim_start__doc__, NULL},
   {"veracrypt_pim_stop", (getter) hashcat_getveracrypt_pim_stop, (setter) hashcat_setveracrypt_pim_stop, veracrypt_pim_stop__doc__, NULL},
   {"workload_profile", (getter) hashcat_getworkload_profile, (setter) hashcat_setworkload_profile, workload_profile__doc__, NULL},
-  {NULL}
-
+  #ifdef WITH_BRAIN
+  {"brain_client", (getter) hashcat_getbrain_client, (setter) hashcat_setbrain_client, brain_client__doc__, NULL},
+  {"brain_client_features", (getter) hashcat_getbrain_features, (setter) hashcat_setbrain_features, brain_features__doc__, NULL},
+  {"brain_server", (getter) hashcat_getbrain_server, (setter) hashcat_setbrain_server, brain_server__doc__, NULL},
+  {"brain_host", (getter) hashcat_getbrain_host, (setter) hashcat_setbrain_host, brain_host__doc__, NULL},
+  {"brain_port", (getter) hashcat_getbrain_port, (setter) hashcat_setbrain_port, brain_port__doc__, NULL},
+  {"brain_password", (getter) hashcat_getbrain_password, (setter) hashcat_setbrain_password, brain_password__doc__, NULL},
+  {"brain_session", (getter) hashcat_getbrain_session, (setter) hashcat_setbrain_session, brain_session__doc__, NULL},
+  {"brain_session_whitelist", (getter) hashcat_getbrain_session_whitelist, (setter) hashcat_setbrain_session_whitelist, brain_session_whitelist__doc__, NULL},
+  #endif
+  {NULL},
 };
 
 
