@@ -98,10 +98,10 @@ const char *event_strs[] = {
 "EVENT_MONITOR_PERFORMANCE_HINT",
 "EVENT_MONITOR_NOINPUT_HINT",
 "EVENT_MONITOR_NOINPUT_ABORT",
-"EVENT_OPENCL_SESSION_POST",
-"EVENT_OPENCL_SESSION_PRE",
-"EVENT_OPENCL_DEVICE_INIT_POST",
-"EVENT_OPENCL_DEVICE_INIT_PRE",
+"EVENT_BACKEND_SESSION_POST",
+"EVENT_BACKEND_SESSION_PRE",
+"EVENT_BACKEND_DEVICE_INIT_POST",
+"EVENT_BACKEND_DEVICE_INIT_PRE",
 "EVENT_OUTERLOOP_FINISHED",
 "EVENT_OUTERLOOP_MAINSCREEN",
 "EVENT_OUTERLOOP_STARTING",
@@ -251,10 +251,10 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_MONITOR_PERFORMANCE_HINT:        size = asprintf(&esignal, "%s", "EVENT_MONITOR_PERFORMANCE_HINT"); break;
     case EVENT_MONITOR_NOINPUT_HINT:            size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_HINT"); break;
     case EVENT_MONITOR_NOINPUT_ABORT:           size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_ABORT"); break;
-    case EVENT_OPENCL_SESSION_POST:             size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_POST"); break;
-    case EVENT_OPENCL_SESSION_PRE:              size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
-    case EVENT_OPENCL_DEVICE_INIT_POST:         size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
-    case EVENT_OPENCL_DEVICE_INIT_PRE:          size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
+    case EVENT_BACKEND_SESSION_POST:             size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_POST"); break;
+    case EVENT_BACKEND_SESSION_PRE:              size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
+    case EVENT_BACKEND_DEVICE_INIT_POST:         size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
+    case EVENT_BACKEND_DEVICE_INIT_PRE:          size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
     case EVENT_OUTERLOOP_FINISHED:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_FINISHED"); break;
     case EVENT_OUTERLOOP_MAINSCREEN:            size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_MAINSCREEN"); break;
     case EVENT_OUTERLOOP_STARTING:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_STARTING"); break;
@@ -3616,74 +3616,74 @@ static int hashcat_setopencl_device_types (hashcatObject * self, PyObject * valu
 
 }
 
-PyDoc_STRVAR(opencl_devices__doc__,
-"opencl_devices\tstr\tOpenCL devices to use, separate with comma\n\n");
+PyDoc_STRVAR(backend_devices__doc__,
+"backend_devices\tstr\tOpenCL devices to use, separate with comma\n\n");
 
-// getter - opencl_devices
-static PyObject *hashcat_getopencl_devices (hashcatObject * self)
+// getter - backend_devices
+static PyObject *hashcat_getbackend_devices (hashcatObject * self)
 {
 
-  if (self->user_options->opencl_devices == NULL)
+  if (self->user_options->backend_devices == NULL)
   {
     Py_INCREF (Py_None);
     return Py_None;
   }
 
-  return Py_BuildValue ("s", self->user_options->opencl_devices);
+  return Py_BuildValue ("s", self->user_options->backend_devices);
 
 }
 
-// setter - opencl_devices
-static int hashcat_setopencl_devices (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_devices
+static int hashcat_setbackend_devices (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_devices attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_devices attribute");
     return -1;
   }
 
   if (!PyUnicode_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_devices attribute value must be a string");
+    PyErr_SetString (PyExc_TypeError, "The backend_devices attribute value must be a string");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->opencl_devices = PyUnicode_AsUTF8 (value);
+  self->user_options->backend_devices = PyUnicode_AsUTF8 (value);
 
   return 0;
 
 }
 
-PyDoc_STRVAR(opencl_info__doc__,
-"opencl_info\tbool\tShow info about OpenCL platforms/devices detected\n\n");
+PyDoc_STRVAR(backend_info__doc__,
+"backend_info\tbool\tShow info about OpenCL/CUDA platforms/devices detected\n\n");
 
-// getter - opencl_info
-static PyObject *hashcat_getopencl_info (hashcatObject * self)
+// getter - backend_info
+static PyObject *hashcat_getbackend_info (hashcatObject * self)
 {
 
-  return PyBool_FromLong (self->user_options->opencl_info);
+  return PyBool_FromLong (self->user_options->backend_info);
 
 }
 
-// setter - opencl_info
-static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_info
+static int hashcat_setbackend_info (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_info attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_info attribute");
     return -1;
   }
 
   if (!PyBool_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_info attribute value must be a bool");
+    PyErr_SetString (PyExc_TypeError, "The backend_info attribute value must be a bool");
     return -1;
   }
 
@@ -3691,14 +3691,14 @@ static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void 
   {
 
     Py_INCREF (value);
-    self->user_options->opencl_info = 1;
+    self->user_options->backend_info = 1;
 
   }
   else
   {
 
     Py_INCREF (value);
-    self->user_options->opencl_info = 0;
+    self->user_options->backend_info = 0;
 
   }
 
@@ -3708,79 +3708,38 @@ static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void 
 
 }
 
-PyDoc_STRVAR(opencl_platforms__doc__,
-"opencl_platforms\tstr\tOpenCL platforms to use, separate with comma\n\n");
 
-// getter - opencl_platforms
-static PyObject *hashcat_getopencl_platforms (hashcatObject * self)
+PyDoc_STRVAR(backend_vector_width__doc__,
+"backend_vector_width\tint\tManual override OpenCL vector-width to X\n\n");
+
+// getter - backend_vector_width
+static PyObject *hashcat_getbackend_vector_width (hashcatObject * self)
 {
 
-  if (self->user_options->opencl_platforms == NULL)
-  {
-    Py_INCREF (Py_None);
-    return Py_None;
-  }
-
-  return Py_BuildValue ("s", self->user_options->opencl_platforms);
+  return Py_BuildValue ("i", self->user_options->backend_vector_width);
 
 }
 
-// setter - opencl_platforms
-static int hashcat_setopencl_platforms (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_vector_width
+static int hashcat_setbackend_vector_width (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_platforms attribute");
-    return -1;
-  }
-
-  if (!PyUnicode_Check (value))
-  {
-
-    PyErr_SetString (PyExc_TypeError, "The opencl_platforms attribute value must be a string");
-    return -1;
-  }
-
-  Py_INCREF (value);
-  self->user_options->opencl_platforms = PyUnicode_AsUTF8 (value);
-
-  return 0;
-
-}
-
-PyDoc_STRVAR(opencl_vector_width__doc__,
-"opencl_vector_width\tint\tManual override OpenCL vector-width to X\n\n");
-
-// getter - opencl_vector_width
-static PyObject *hashcat_getopencl_vector_width (hashcatObject * self)
-{
-
-  return Py_BuildValue ("i", self->user_options->opencl_vector_width);
-
-}
-
-// setter - opencl_vector_width
-static int hashcat_setopencl_vector_width (hashcatObject * self, PyObject * value, void *closure)
-{
-
-  if (value == NULL)
-  {
-
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_vector_width attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_vector_width attribute");
     return -1;
   }
 
   if (!PyLong_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_vector_width attribute value must be a int");
+    PyErr_SetString (PyExc_TypeError, "The backend_vector_width attribute value must be a int");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->opencl_vector_width = PyLong_AsLong (value);
+  self->user_options->backend_vector_width = PyLong_AsLong (value);
 
   return 0;
 
@@ -5837,10 +5796,9 @@ static PyGetSetDef hashcat_getseters[] = {
   {"markov_threshold", (getter) hashcat_getmarkov_threshold, (setter) hashcat_setmarkov_threshold, markov_threshold__doc__, NULL},
   {"spin_damp", (getter) hashcat_getspin_damp, (setter) hashcat_setspin_damp, spin_damp__doc__, NULL},
   {"opencl_device_types", (getter) hashcat_getopencl_device_types, (setter) hashcat_setopencl_device_types, opencl_device_types__doc__, NULL},
-  {"opencl_devices", (getter) hashcat_getopencl_devices, (setter) hashcat_setopencl_devices, opencl_devices__doc__, NULL},
-  {"opencl_info", (getter) hashcat_getopencl_info, (setter) hashcat_setopencl_info, opencl_info__doc__, NULL},
-  {"opencl_platforms", (getter) hashcat_getopencl_platforms, (setter) hashcat_setopencl_platforms, opencl_platforms__doc__, NULL},
-  {"opencl_vector_width", (getter) hashcat_getopencl_vector_width, (setter) hashcat_setopencl_vector_width, opencl_vector_width__doc__, NULL},
+  {"backend_devices", (getter) hashcat_getbackend_devices, (setter) hashcat_setbackend_devices, backend_devices__doc__, NULL},
+  {"backend_info", (getter) hashcat_getbackend_info, (setter) hashcat_setbackend_info, backend_info__doc__, NULL},
+  {"backend_vector_width", (getter) hashcat_getbackend_vector_width, (setter) hashcat_setbackend_vector_width, backend_vector_width__doc__, NULL},
   {"optimized_kernel_enable", (getter) hashcat_getoptimized_kernel_enable, (setter) hashcat_setoptimized_kernel_enable, optimized_kernel_enable__doc__, NULL},
   {"outfile", (getter) hashcat_getoutfile, (setter) hashcat_setoutfile, outfile__doc__, NULL},
   {"outfile_autohex", (getter) hashcat_getoutfile_autohex, (setter) hashcat_setoutfile_autohex, outfile_autohex__doc__, NULL},
