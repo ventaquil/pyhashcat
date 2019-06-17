@@ -780,6 +780,8 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  PyDict_SetItemString(stat_dict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
 	  PyDict_SetItemString(stat_dict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
 	  PyDict_SetItemString(stat_dict, "Running Time", Py_BuildValue ("d", hashcat_status->msec_running));
+	  PyDict_SetItemString(stat_dict, "Brain Traffic (RX)", Py_BuildValue ("s", hashcat_status->brain_rx_all));
+	  PyDict_SetItemString(stat_dict, "Brain Traffic (TX)", Py_BuildValue ("s", hashcat_status->brain_tx_all));
 	  hcfree (hashcat_status);
 	  return stat_dict;
   }
