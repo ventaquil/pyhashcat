@@ -5140,7 +5140,6 @@ static int hashcat_setbrain_password (hashcatObject * self, PyObject * value, vo
 
 }
 
-
 PyDoc_STRVAR(brain_session_whitelist__doc__,
 "brain_session_whitelist -> str\n\n\
 Get/set brain session whitelist.\n\n");
@@ -5187,6 +5186,18 @@ static int hashcat_setbrain_session_whitelist (hashcatObject * self, PyObject * 
 
 }
 
+PyDoc_STRVAR(status_get_brain_rx_all__doc__,
+"status_get_brain_rx_all(device_id) -> str\n\n\
+Return total combine brain traffic of all devices.\n\n");
+
+static PyObject *hashcat_status_get_brain_rx_all (hashcatObject * self, PyObject * noargs)
+{
+
+  char *rtn;
+
+  rtn = status_get_brain_rx_all (self->hashcat_ctx);
+  return Py_BuildValue ("s", rtn);
+}
 #endif
 
 
@@ -5751,6 +5762,7 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_memoryspeed_dev", (PyCFunction) hashcat_status_get_memoryspeed_dev, METH_VARARGS, status_get_memoryspeed_dev__doc__},
   {"status_get_progress_dev", (PyCFunction) hashcat_status_get_progress_dev, METH_VARARGS, status_get_progress_dev__doc__},
   {"status_get_runtime_msec_dev", (PyCFunction) hashcat_status_get_runtime_msec_dev, METH_VARARGS, status_get_runtime_msec_dev__doc__},
+  {"status_get_brain_rx_all", (PyCFunction) hashcat_status_get_brain_rx_all, METH_NOARGS, status_get_brain_rx_all__doc__},
   {NULL, NULL, 0, NULL}
 };
 
