@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import os
-import sys
 from time import sleep
 from pyhashcat import Hashcat
 
@@ -12,14 +10,15 @@ def finished_callback(sender):
     global finished
     finished = True
 
+def any_callback(sender):
+    print('Hash Type: ', sender.hash_mode)
+    print('Speed: ', sender.hashcat_status_get_status())
+    bench_dict[sender.hash_mode] = sender.hashcat_status_get_status()['Speed All']
+
 def benchmark_status(sender):
-    device_cnt = sender.status_get_device_info_cnt()
-    print("HashType: ", str(sender.status_get_hash_type()))
+    print(sender.hashcat_status_get_status())
 
-    for i in range(device_cnt):
-        print("Speed.Dev.#", str(i), ".....: ", str(sender.status_get_speed_sec_dev(i)),"H/s (", str(sender.status_get_exec_msec_dev(i)), "ms)")
-
-
+bench_dict = {}
 print("-------------------------------")
 print("----  pyhashcat Benchmark  ----")
 print("-------------------------------")
@@ -27,21 +26,24 @@ print("-------------------------------")
 finished = False
 hc = Hashcat()
 hc.benchmark = True
-hc.workload_profile = 2
+hc.workload_profile = 4
 
 print("[!] Hashcat object init with id: ", id(hc))
 print("[!] cb_id finished: ", hc.event_connect(callback=finished_callback, signal="EVENT_OUTERLOOP_FINISHED"))
-print("[!] cb_id benchmark_status: ", hc.event_connect(callback=benchmark_status, signal="EVENT_CRACKER_FINISHED"))
-
+print("[!] cb_id benchmark_status: ", hc.event_connect(callback=any_callback, signal="EVENT_CRACKER_FINISHED"))
 print("[!] Starting Benchmark Mode")
 
 cracked = []
 print("[+] Running hashcat")
 if hc.hashcat_session_execute() >= 0:
-    print("[.] Workload profile", str(hc.workload_profile))
     sleep(5)
     # hashcat should be running in a background thread
     # wait for it to finishing cracking
     while True:
         if finished:
             break
+print('[+] Writing System Benchmark Report to: sys_benchmark.txt')
+with open('sys_benchmark.txt', 'w') as fh_bench:
+    for key, val in bench_dict.items():
+        fh_bench.write('{}:{}\n'.format(key, val))
+
