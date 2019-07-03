@@ -783,6 +783,7 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  PyDict_SetItemString(stat_dict, "Brain Traffic (RX)", Py_BuildValue ("s", hashcat_status->brain_rx_all));
 	  PyDict_SetItemString(stat_dict, "Brain Traffic (TX)", Py_BuildValue ("s", hashcat_status->brain_tx_all));
 	  PyDict_SetItemString(stat_dict, "Rejected", Py_BuildValue ("i", hashcat_status->progress_rejected));
+	  PyDict_SetItemString(stat_dict, "Rejected Percentage", Py_BuildValue ("d", hashcat_status->progress_rejected_percent));
 	  PyDict_SetItemString(stat_dict, "Salts", Py_BuildValue ("i", hashcat_status->salts_cnt));
 
 	  hcfree (hashcat_status);

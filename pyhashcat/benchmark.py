@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import json
 from time import sleep
 from pyhashcat import Hashcat
 
@@ -12,7 +12,7 @@ def finished_callback(sender):
 
 def any_callback(sender):
     print('Hash Type: ', sender.hash_mode)
-    print('Speed: ', sender.hashcat_status_get_status())
+    print('Speed: ', sender.hashcat_status_get_status()['Speed All'])
     bench_dict[sender.hash_mode] = sender.hashcat_status_get_status()['Speed All']
 
 def benchmark_status(sender):
@@ -44,6 +44,7 @@ if hc.hashcat_session_execute() >= 0:
             break
 print('[+] Writing System Benchmark Report to: sys_benchmark.txt')
 with open('sys_benchmark.txt', 'w') as fh_bench:
-    for key, val in bench_dict.items():
-        fh_bench.write('{}:{}\n'.format(key, val))
+    fh_bench.write(json.dumps(bench_dict))
+    #for key, val in bench_dict.items():
+    #    fh_bench.write('{}:{}\n'.format(key, val))
 
