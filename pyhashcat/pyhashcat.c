@@ -15,6 +15,9 @@
 #include "status.h"
 #include "user_options.h"
 #include "hashcat.h"
+#include "interface.h"
+#include "shared.h"
+#include "usage.h"
 
 #ifndef MAXH
 #define MAXH 100
@@ -482,9 +485,8 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
   size_t hc_argv_size = 1;
   char **hc_argv = (char **) calloc (hc_argv_size, sizeof (char *));
 
-  // Benchmark is a special case
+  // Benchmark/usage are special cases
   if (self->user_options->benchmark){
-
     self->hc_argc = 1;
     hc_argv_size = self->hc_argc + 1;
     hc_argv = (char **) realloc (hc_argv, sizeof (char *) * (hc_argv_size));
@@ -492,7 +494,36 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
     self->user_options->hc_argc = self->hc_argc;
     self->user_options->hc_argv = hc_argv;
 
-  // Every other case need a hash source set otherwise fail
+  // Benchmark/usage are special cases
+  // Using backend_info to bypass hash requirement, but usage should be printed before executing
+  } else if (self->user_options->backend_info){
+    self->rc_init = hashcat_session_init (self->hashcat_ctx, py_path, hc_path, 0, NULL, 0);
+
+    if (self->rc_init != 0)
+    {
+
+      char *msg = hashcat_get_log (self->hashcat_ctx);
+
+      PyErr_SetString (PyExc_RuntimeError, msg);
+
+      Py_INCREF (Py_None);
+      return Py_None;
+
+    }
+
+    int rtn;
+    pthread_t hThread;
+
+    Py_BEGIN_ALLOW_THREADS
+
+    rtn = pthread_create(&hThread, NULL, &hc_session_exe_thread, (void *)self);
+
+    Py_END_ALLOW_THREADS
+
+    //usage_big_print (self->hashcat_ctx);
+
+    return Py_BuildValue ("i", rtn);
+
   } else if (self->hash == NULL) {
 
     PyErr_SetString (PyExc_RuntimeError, "Hash source not set");
@@ -767,6 +798,7 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 {
   hashcat_status_t *hashcat_status = (hashcat_status_t *) hcmalloc (sizeof (hashcat_status_t));
   const int hc_status = hashcat_get_status (self->hashcat_ctx, hashcat_status);
+  const double hashes_msec_all = status_get_hashes_msec_all(self->hashcat_ctx) * 1000;
   if (hc_status == 0)
   {
 	  PyObject *stat_dict = PyDict_New();
@@ -776,6 +808,7 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  PyDict_SetItemString(stat_dict, "Total Hashes", Py_BuildValue ("i", hashcat_status->digests_cnt));
 	  PyDict_SetItemString(stat_dict, "Cracked Hashes", Py_BuildValue ("i", hashcat_status->digests_done));
 	  PyDict_SetItemString(stat_dict, "Speed All", Py_BuildValue ("s", hashcat_status->speed_sec_all));
+	  PyDict_SetItemString(stat_dict, "Speed Raw", Py_BuildValue ("d", hashes_msec_all));
 	  PyDict_SetItemString(stat_dict, "Restore Point", Py_BuildValue ("K", hashcat_status->restore_point));
 	  PyDict_SetItemString(stat_dict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
 	  PyDict_SetItemString(stat_dict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
@@ -785,7 +818,6 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  PyDict_SetItemString(stat_dict, "Rejected", Py_BuildValue ("i", hashcat_status->progress_rejected));
 	  PyDict_SetItemString(stat_dict, "Rejected Percentage", Py_BuildValue ("d", hashcat_status->progress_rejected_percent));
 	  PyDict_SetItemString(stat_dict, "Salts", Py_BuildValue ("i", hashcat_status->salts_cnt));
-
 	  hcfree (hashcat_status);
 	  return stat_dict;
   }
@@ -802,6 +834,91 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  return NULL;
   }
 }
+
+
+
+
+PyDoc_STRVAR(hashcat_list_hashmodes__doc__,
+"Return dictionary containing all hash modes\n\n");
+
+typedef struct usage_sort
+{
+  u32   hash_mode;
+  char *hash_name;
+  u32   hash_category;
+
+} usage_sort_t;
+
+static int sort_by_usage (const void *p1, const void *p2)
+{
+  const usage_sort_t *u1 = (const usage_sort_t *) p1;
+  const usage_sort_t *u2 = (const usage_sort_t *) p2;
+
+  if (u1->hash_category > u2->hash_category) return  1;
+  if (u1->hash_category < u2->hash_category) return -1;
+
+  const int rc_name = strncmp (u1->hash_name + 1, u2->hash_name + 1, 15); // yes, strange...
+
+  if (rc_name > 0) return  1;
+  if (rc_name < 0) return -1;
+
+  if (u1->hash_mode > u2->hash_mode) return  1;
+  if (u1->hash_mode < u2->hash_mode) return -1;
+
+  return 0;
+}
+
+static PyObject *hashcat_list_hashmodes (hashcatObject * self, PyObject * noargs)
+{
+  const folder_config_t *folder_config = self->hashcat_ctx->folder_config;
+  const hashconfig_t    *hashconfig    = self->hashcat_ctx->hashconfig;
+        user_options_t  *user_options  = self->hashcat_ctx->user_options;
+  char *modulefile = (char *) hcmalloc (HCBUFSIZ_TINY);
+
+  usage_sort_t *usage_sort_buf = (usage_sort_t *) hccalloc (MODULE_HASH_MODES_MAXIMUM, sizeof (usage_sort_t));
+
+  PyObject *hashmodes_dict = PyDict_New();
+  int usage_sort_cnt = 0;
+
+  for (int i = 0; i < MODULE_HASH_MODES_MAXIMUM; i++)
+  {
+    user_options->hash_mode = i;
+
+    module_filename (folder_config, i, modulefile, HCBUFSIZ_TINY);
+
+    if (hc_path_exist (modulefile) == false) continue;
+
+    const int rc = hashconfig_init (self->hashcat_ctx);
+
+    if (rc == 0)
+    {
+      usage_sort_buf[usage_sort_cnt].hash_mode     = hashconfig->hash_mode;
+      usage_sort_buf[usage_sort_cnt].hash_name     = hcstrdup (hashconfig->hash_name);
+      usage_sort_buf[usage_sort_cnt].hash_category = hashconfig->hash_category;
+
+      usage_sort_cnt++;
+    }
+
+    hashconfig_destroy (self->hashcat_ctx);
+  }
+
+  hcfree (modulefile);
+
+  qsort (usage_sort_buf, usage_sort_cnt, sizeof (usage_sort_t), sort_by_usage);
+  for (int i = 0; i < usage_sort_cnt; i++)
+  {
+    PyObject *hashmodes_list = PyList_New(0);
+    PyList_Append(hashmodes_list, Py_BuildValue ("s", usage_sort_buf[i].hash_name));
+    PyList_Append(hashmodes_list, Py_BuildValue ("s", strhashcategory (usage_sort_buf[i].hash_category)));
+    PyDict_SetItem(hashmodes_dict, Py_BuildValue ("i", usage_sort_buf[i].hash_mode), hashmodes_list);
+  }
+
+  hcfree (usage_sort_buf);
+
+  return hashmodes_dict;
+
+}
+
 
 PyDoc_STRVAR(status_get_device_info_cnt__doc__,
 "status_get_device_info_cnt -> int\n\n\
@@ -2077,6 +2194,57 @@ static int hashcat_setbenchmark (hashcatObject * self, PyObject * value, void *c
 
     Py_INCREF (value);
     self->user_options->benchmark = 0;
+
+  }
+
+
+
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(benchmark_all__doc__,
+"benchmark\tbool\tRun benchmark against all hash modes\n\n");
+
+// getter - benchmark-all
+static PyObject *hashcat_getbenchmark_all (hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->benchmark_all);
+
+}
+
+// setter - benchmark-all
+static int hashcat_setbenchmark_all (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete benchmark-all attribute");
+    return -1;
+  }
+
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The benchmark-all attribute value must be a bool");
+    return -1;
+  }
+
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->benchmark_all = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->benchmark_all = 0;
 
   }
 
@@ -5477,6 +5645,57 @@ static int hashcat_settruecrypt_keyfiles (hashcatObject * self, PyObject * value
 }
 
 
+PyDoc_STRVAR(usage__doc__,
+"Usage\tbool\tRun usage\n\n");
+
+// getter - usage
+static PyObject *hashcat_getusage (hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->usage);
+
+}
+
+// setter - usage
+static int hashcat_setusage (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete usage attribute");
+    return -1;
+  }
+
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The usage attribute value must be a bool");
+    return -1;
+  }
+
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->usage = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->usage = 0;
+
+  }
+
+
+
+  return 0;
+
+}
+
+
 PyDoc_STRVAR(username__doc__,
 "username\tbool\tEnable ignoring of usernames in hashfile\n\n");
 
@@ -5767,7 +5986,8 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_progress_dev", (PyCFunction) hashcat_status_get_progress_dev, METH_VARARGS, status_get_progress_dev__doc__},
   {"status_get_runtime_msec_dev", (PyCFunction) hashcat_status_get_runtime_msec_dev, METH_VARARGS, status_get_runtime_msec_dev__doc__},
   {"status_get_brain_rx_all", (PyCFunction) hashcat_status_get_brain_rx_all, METH_NOARGS, status_get_brain_rx_all__doc__},
-  {NULL, NULL, 0, NULL}
+  {"hashcat_list_hashmodes", (PyCFunction) hashcat_list_hashmodes, METH_NOARGS, hashcat_list_hashmodes__doc__},
+  {NULL, NULL, 0, NULL},
 };
 
 
@@ -5779,6 +5999,7 @@ static PyGetSetDef hashcat_getseters[] = {
   {"mask", (getter) hashcat_getmask, (setter) hashcat_setmask, mask__doc__, NULL},
   {"attack_mode", (getter) hashcat_getattack_mode, (setter) hashcat_setattack_mode, attack_mode__doc__, NULL},
   {"benchmark", (getter) hashcat_getbenchmark, (setter) hashcat_setbenchmark, benchmark__doc__, NULL},
+  {"benchmark_all", (getter) hashcat_getbenchmark_all, (setter) hashcat_setbenchmark_all, benchmark_all__doc__, NULL},
   {"bitmap_max", (getter) hashcat_getbitmap_max, (setter) hashcat_setbitmap_max, bitmap_max__doc__, NULL},
   {"bitmap_min", (getter) hashcat_getbitmap_min, (setter) hashcat_setbitmap_min, bitmap_min__doc__, NULL},
   {"cpu_affinity", (getter) hashcat_getcpu_affinity, (setter) hashcat_setcpu_affinity, cpu_affinity__doc__, NULL},
@@ -5851,6 +6072,7 @@ static PyGetSetDef hashcat_getseters[] = {
 //   {"stdout_flag", (getter)hashcat_getstdout_flag, (setter)hashcat_setstdout_flag, stdout_flag__doc__, NULL },
   {"truecrypt_keyfiles", (getter) hashcat_gettruecrypt_keyfiles, (setter) hashcat_settruecrypt_keyfiles, truecrypt_keyfiles__doc__, NULL},
   {"username", (getter) hashcat_getusername, (setter) hashcat_setusername, username__doc__, NULL},
+  {"usage", (getter) hashcat_getusage, (setter) hashcat_setusage, usage__doc__, NULL},
   {"veracrypt_keyfiles", (getter) hashcat_getveracrypt_keyfiles, (setter) hashcat_setveracrypt_keyfiles, veracrypt_keyfiles__doc__, NULL},
   {"veracrypt_pim_start", (getter) hashcat_getveracrypt_pim_start, (setter) hashcat_setveracrypt_pim_start, veracrypt_pim_start__doc__, NULL},
   {"veracrypt_pim_stop", (getter) hashcat_getveracrypt_pim_stop, (setter) hashcat_setveracrypt_pim_stop, veracrypt_pim_stop__doc__, NULL},

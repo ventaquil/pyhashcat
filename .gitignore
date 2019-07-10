@@ -8,3 +8,4 @@ build*
 !.vscode/launch.json
 !.vscode/extensions.json
 sys_benchmark.txt
+pyhashcat/hashcat/
