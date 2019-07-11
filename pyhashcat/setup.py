@@ -21,7 +21,7 @@ except Exception as e:
 	sys.exit(1)
 
 pyhashcat_module = Extension('pyhashcat',
-							include_dirs = ['hashcat/include', 'hashcat/deps/OpenCL-Headers', 'hashcat/OpenCL','hashcat'],
+							include_dirs = ['hashcat/include', 'hashcat/deps/OpenCL-Headers', 'hashcat/OpenCL', 'hashcat', 'hashcat/deps/zlib'],
 							library_dirs = [hc_lib_path],
 							libraries = [hc_lib],
 							extra_link_args = ['-shared', '-Wl,-R/usr/local/lib'],
