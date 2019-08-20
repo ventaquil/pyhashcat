@@ -349,6 +349,28 @@ static PyObject *hashcat_reset (hashcatObject * self, PyObject * args, PyObject 
 
 }
 
+PyDoc_STRVAR(soft_reset__doc__,
+"soft_reset\n\n\
+Soft reset to reset hashcat session object/pic but retain options.\n\n\
+This prevents python variables being cleared/overwritten\n\n");
+
+
+static PyObject *soft_reset (hashcatObject * self, PyObject * args, PyObject *kwargs)
+{
+
+  // Initate hashcat clean-up
+  hashcat_session_destroy (self->hashcat_ctx);
+
+  hashcat_destroy (self->hashcat_ctx);
+
+  Py_XDECREF (self->hashcat_ctx);
+
+  free (self->hashcat_ctx);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+
+}
 /* Helper function to to create a new hashcat object. Called from hashcat_new() */
 
 static hashcatObject *newhashcatObject (PyObject * arg)
@@ -5911,6 +5933,7 @@ static PyMethodDef hashcat_methods[] = {
 
   {"event_connect", (PyCFunction) hashcat_event_connect, METH_VARARGS|METH_KEYWORDS, event_connect__doc__},
   {"reset", (PyCFunction) hashcat_reset, METH_NOARGS, reset__doc__},
+  {"soft_reset", (PyCFunction) soft_reset, METH_NOARGS, soft_reset__doc__},
   {"hashcat_session_execute", (PyCFunction) hashcat_hashcat_session_execute, METH_VARARGS|METH_KEYWORDS, hashcat_session_execute__doc__},
   {"hashcat_session_pause", (PyCFunction) hashcat_hashcat_session_pause, METH_NOARGS, hashcat_session_pause__doc__},
   {"hashcat_session_resume", (PyCFunction) hashcat_hashcat_session_resume, METH_NOARGS, hashcat_session_resume__doc__},
