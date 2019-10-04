@@ -821,9 +821,32 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
   hashcat_status_t *hashcat_status = (hashcat_status_t *) hcmalloc (sizeof (hashcat_status_t));
   const int hc_status = hashcat_get_status (self->hashcat_ctx, hashcat_status);
   const double hashes_msec_all = status_get_hashes_msec_all(self->hashcat_ctx) * 1000;
+  const hwmon_ctx_t *hwmon_ctx = self->hashcat_ctx->hwmon_ctx;
   if (hc_status == 0)
   {
-	  PyObject *stat_dict = PyDict_New();
+      PyObject *temps_list = PyList_New(hashcat_status->device_info_cnt);
+      PyObject *stat_dict = PyDict_New();
+      PyObject *temp_dict = PyDict_New();
+      if (hwmon_ctx->enabled == true)
+        {
+            int device_num = 0;
+            for (int device_id = 0; device_id < hashcat_status->device_info_cnt; device_id++)
+            {
+                const device_info_t *device_info = hashcat_status->device_info_buf + device_id;
+                if (device_info->skipped_dev == true) continue;
+                if (device_info->skipped_warning_dev == true) continue;
+                if (device_num != 0)
+                {
+                    const int temp = hm_get_temperature_with_devices_idx (self->hashcat_ctx, device_id);
+                    const int id_len = snprintf( NULL, 0, "%d", temp);
+                    char *dev_id = malloc(id_len + 1);
+                    snprintf(dev_id, id_len + 1, "%d", temp);
+                    PyDict_SetItemString(temp_dict, "test", Py_BuildValue ("i", temp));
+                    PyList_Append(temps_list, temp_dict);
+                }
+            device_num++;
+            }
+        }
 	  PyDict_SetItemString(stat_dict, "Session", Py_BuildValue ("s", hashcat_status->session));
 	  PyDict_SetItemString(stat_dict, "Progress", Py_BuildValue ("d", hashcat_status->progress_finished_percent));
 	  PyDict_SetItemString(stat_dict, "HC Status", Py_BuildValue ("s", hashcat_status->status_string));
@@ -840,6 +863,8 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  PyDict_SetItemString(stat_dict, "Rejected", Py_BuildValue ("i", hashcat_status->progress_rejected));
 	  PyDict_SetItemString(stat_dict, "Rejected Percentage", Py_BuildValue ("d", hashcat_status->progress_rejected_percent));
 	  PyDict_SetItemString(stat_dict, "Salts", Py_BuildValue ("i", hashcat_status->salts_cnt));
+	  PyDict_SetItemString(stat_dict, "Device Temperatures", temp_dict);
+
 	  hcfree (hashcat_status);
 	  return stat_dict;
   }
