@@ -838,10 +838,10 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
                 if (device_num != 0)
                 {
                     const int temp = hm_get_temperature_with_devices_idx (self->hashcat_ctx, device_id);
-                    const int id_len = snprintf( NULL, 0, "%d", temp);
+                    const int id_len = snprintf( NULL, 0, "%d", dev_id);
                     char *dev_id = malloc(id_len + 1);
-                    snprintf(dev_id, id_len + 1, "%d", temp);
-                    PyDict_SetItemString(temp_dict, "test", Py_BuildValue ("i", temp));
+                    snprintf(dev_id, id_len + 1, "%d", dev_id);
+                    PyDict_SetItemString(temp_dict, dev_id, Py_BuildValue ("i", temp));
                     PyList_Append(temps_list, temp_dict);
                 }
             device_num++;
