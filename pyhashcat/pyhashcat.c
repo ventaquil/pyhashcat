@@ -11,6 +11,7 @@
 #include "structmember.h"
 #include "common.h"
 #include "types.h"
+#include "hwmon.h"
 #include "memory.h"
 #include "status.h"
 #include "user_options.h"
@@ -835,16 +836,13 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
                 const device_info_t *device_info = hashcat_status->device_info_buf + device_id;
                 if (device_info->skipped_dev == true) continue;
                 if (device_info->skipped_warning_dev == true) continue;
-                if (device_num != 0)
-                {
-                    const int temp = hm_get_temperature_with_devices_idx (self->hashcat_ctx, device_id);
-                    const int id_len = snprintf( NULL, 0, "%d", device_id);
-                    char *dev_id = malloc(id_len + 1);
-                    snprintf(dev_id, id_len + 1, "%d", device_id);
-                    PyDict_SetItemString(temp_dict, dev_id, Py_BuildValue ("i", temp));
-                    PyList_Append(temps_list, temp_dict);
-                }
-            device_num++;
+	        const int temp = hm_get_temperature_with_devices_idx (self->hashcat_ctx, device_id);
+	        const int id_len = snprintf( NULL, 0, "%d", device_id);
+	        char *dev_id = malloc(id_len + 1);
+	        snprintf(dev_id, id_len + 1, "%d", device_id);
+	        PyDict_SetItemString(temp_dict, dev_id, Py_BuildValue ("i", temp));
+	        PyList_Append(temps_list, temp_dict);
+            	device_num++;
             }
         }
 	  PyDict_SetItemString(stat_dict, "Session", Py_BuildValue ("s", hashcat_status->session));
