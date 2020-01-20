@@ -1012,6 +1012,18 @@ static PyObject *hashcat_status_get_skipped_dev (hashcatObject * self, PyObject 
   return PyBool_FromLong (rtn);
 }
 
+PyDoc_STRVAR(status_get_log__doc__,
+"hashcat_status_get_log-> char\n\n\
+Return event context info.\n\n");
+
+
+static PyObject *hashcat_status_get_log (hashcatObject * self, PyObject * noargs)
+{
+
+  char *rtn;
+  rtn = hashcat_get_log (self->hashcat_ctx);
+  return Py_BuildValue ("s", rtn);
+}
 
 PyDoc_STRVAR(status_get_session__doc__,
 "status_get_session -> str\n\n\
@@ -5967,6 +5979,7 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_device_info_cnt", (PyCFunction) hashcat_status_get_device_info_cnt, METH_NOARGS, status_get_device_info_cnt__doc__},
   {"status_get_device_info_active", (PyCFunction) hashcat_status_get_device_info_active, METH_NOARGS, status_get_device_info_active__doc__},
   {"status_get_skipped_dev", (PyCFunction) hashcat_status_get_skipped_dev, METH_VARARGS, status_get_skipped_dev__doc__},
+  {"hashcat_status_get_log", (PyCFunction) hashcat_status_get_log, METH_NOARGS, status_get_log__doc__},
   {"status_get_session", (PyCFunction) hashcat_status_get_session, METH_NOARGS, status_get_session__doc__},
   {"status_get_status_string", (PyCFunction) hashcat_status_get_status_string, METH_NOARGS, status_get_status_string__doc__},
   {"status_get_status_number", (PyCFunction) hashcat_status_get_status_number, METH_NOARGS, status_get_status_number__doc__},
