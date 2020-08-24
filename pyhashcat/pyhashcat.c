@@ -11,10 +11,14 @@
 #include "structmember.h"
 #include "common.h"
 #include "types.h"
+#include "hwmon.h"
 #include "memory.h"
 #include "status.h"
 #include "user_options.h"
 #include "hashcat.h"
+#include "interface.h"
+#include "shared.h"
+#include "usage.h"
 
 #ifndef MAXH
 #define MAXH 100
@@ -98,10 +102,10 @@ const char *event_strs[] = {
 "EVENT_MONITOR_PERFORMANCE_HINT",
 "EVENT_MONITOR_NOINPUT_HINT",
 "EVENT_MONITOR_NOINPUT_ABORT",
-"EVENT_OPENCL_SESSION_POST",
-"EVENT_OPENCL_SESSION_PRE",
-"EVENT_OPENCL_DEVICE_INIT_POST",
-"EVENT_OPENCL_DEVICE_INIT_PRE",
+"EVENT_BACKEND_SESSION_POST",
+"EVENT_BACKEND_SESSION_PRE",
+"EVENT_BACKEND_DEVICE_INIT_POST",
+"EVENT_BACKEND_DEVICE_INIT_PRE",
 "EVENT_OUTERLOOP_FINISHED",
 "EVENT_OUTERLOOP_MAINSCREEN",
 "EVENT_OUTERLOOP_STARTING",
@@ -251,10 +255,10 @@ static void event (const u32 id, hashcat_ctx_t * hashcat_ctx, const void *buf, c
     case EVENT_MONITOR_PERFORMANCE_HINT:        size = asprintf(&esignal, "%s", "EVENT_MONITOR_PERFORMANCE_HINT"); break;
     case EVENT_MONITOR_NOINPUT_HINT:            size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_HINT"); break;
     case EVENT_MONITOR_NOINPUT_ABORT:           size = asprintf(&esignal, "%s", "EVENT_MONITOR_NOINPUT_ABORT"); break;
-    case EVENT_OPENCL_SESSION_POST:             size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_POST"); break;
-    case EVENT_OPENCL_SESSION_PRE:              size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
-    case EVENT_OPENCL_DEVICE_INIT_POST:         size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
-    case EVENT_OPENCL_DEVICE_INIT_PRE:          size = asprintf(&esignal, "%s", "EVENT_OPENCL_SESSION_PRE"); break;
+    case EVENT_BACKEND_SESSION_POST:             size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_POST"); break;
+    case EVENT_BACKEND_SESSION_PRE:              size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
+    case EVENT_BACKEND_DEVICE_INIT_POST:         size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
+    case EVENT_BACKEND_DEVICE_INIT_PRE:          size = asprintf(&esignal, "%s", "EVENT_BACKEND_SESSION_PRE"); break;
     case EVENT_OUTERLOOP_FINISHED:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_FINISHED"); break;
     case EVENT_OUTERLOOP_MAINSCREEN:            size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_MAINSCREEN"); break;
     case EVENT_OUTERLOOP_STARTING:              size = asprintf(&esignal, "%s", "EVENT_OUTERLOOP_STARTING"); break;
@@ -346,6 +350,28 @@ static PyObject *hashcat_reset (hashcatObject * self, PyObject * args, PyObject 
 
 }
 
+PyDoc_STRVAR(soft_reset__doc__,
+"soft_reset\n\n\
+Soft reset to reset hashcat session object/pic but retain options.\n\n\
+This prevents python variables being cleared/overwritten\n\n");
+
+
+static PyObject *soft_reset (hashcatObject * self, PyObject * args, PyObject *kwargs)
+{
+
+  // Initate hashcat clean-up
+  hashcat_session_destroy (self->hashcat_ctx);
+
+  hashcat_destroy (self->hashcat_ctx);
+
+  Py_XDECREF (self->hashcat_ctx);
+
+  free (self->hashcat_ctx);
+
+  Py_INCREF(Py_None);
+  return Py_None;
+
+}
 /* Helper function to to create a new hashcat object. Called from hashcat_new() */
 
 static hashcatObject *newhashcatObject (PyObject * arg)
@@ -482,9 +508,8 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
   size_t hc_argv_size = 1;
   char **hc_argv = (char **) calloc (hc_argv_size, sizeof (char *));
 
-  // Benchmark is a special case
+  // Benchmark/usage are special cases
   if (self->user_options->benchmark){
-
     self->hc_argc = 1;
     hc_argv_size = self->hc_argc + 1;
     hc_argv = (char **) realloc (hc_argv, sizeof (char *) * (hc_argv_size));
@@ -492,7 +517,36 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
     self->user_options->hc_argc = self->hc_argc;
     self->user_options->hc_argv = hc_argv;
 
-  // Every other case need a hash source set otherwise fail
+  // Benchmark/usage are special cases
+  // Using backend_info to bypass hash requirement, but usage should be printed before executing
+  } else if (self->user_options->backend_info){
+    self->rc_init = hashcat_session_init (self->hashcat_ctx, py_path, hc_path, 0, NULL, 0);
+
+    if (self->rc_init != 0)
+    {
+
+      char *msg = hashcat_get_log (self->hashcat_ctx);
+
+      PyErr_SetString (PyExc_RuntimeError, msg);
+
+      Py_INCREF (Py_None);
+      return Py_None;
+
+    }
+
+    int rtn;
+    pthread_t hThread;
+
+    Py_BEGIN_ALLOW_THREADS
+
+    rtn = pthread_create(&hThread, NULL, &hc_session_exe_thread, (void *)self);
+
+    Py_END_ALLOW_THREADS
+
+    //usage_big_print (self->hashcat_ctx);
+
+    return Py_BuildValue ("i", rtn);
+
   } else if (self->hash == NULL) {
 
     PyErr_SetString (PyExc_RuntimeError, "Hash source not set");
@@ -767,19 +821,48 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 {
   hashcat_status_t *hashcat_status = (hashcat_status_t *) hcmalloc (sizeof (hashcat_status_t));
   const int hc_status = hashcat_get_status (self->hashcat_ctx, hashcat_status);
+  const double hashes_msec_all = status_get_hashes_msec_all(self->hashcat_ctx) * 1000;
+  const hwmon_ctx_t *hwmon_ctx = self->hashcat_ctx->hwmon_ctx;
   if (hc_status == 0)
   {
-	  PyObject *stat_dict = PyDict_New();
+      PyObject *temps_list = PyList_New(hashcat_status->device_info_cnt);
+      PyObject *stat_dict = PyDict_New();
+      PyObject *temp_dict = PyDict_New();
+      if (hwmon_ctx->enabled == true)
+        {
+            int device_num = 0;
+            for (int device_id = 0; device_id < hashcat_status->device_info_cnt; device_id++)
+            {
+                const device_info_t *device_info = hashcat_status->device_info_buf + device_id;
+                if (device_info->skipped_dev == true) continue;
+                if (device_info->skipped_warning_dev == true) continue;
+	        const int temp = hm_get_temperature_with_devices_idx (self->hashcat_ctx, device_id);
+	        const int id_len = snprintf( NULL, 0, "%d", device_id);
+	        char *dev_id = malloc(id_len + 1);
+	        snprintf(dev_id, id_len + 1, "%d", device_id);
+	        PyDict_SetItemString(temp_dict, dev_id, Py_BuildValue ("i", temp));
+	        PyList_Append(temps_list, temp_dict);
+            	device_num++;
+            }
+        }
 	  PyDict_SetItemString(stat_dict, "Session", Py_BuildValue ("s", hashcat_status->session));
 	  PyDict_SetItemString(stat_dict, "Progress", Py_BuildValue ("d", hashcat_status->progress_finished_percent));
 	  PyDict_SetItemString(stat_dict, "HC Status", Py_BuildValue ("s", hashcat_status->status_string));
 	  PyDict_SetItemString(stat_dict, "Total Hashes", Py_BuildValue ("i", hashcat_status->digests_cnt));
 	  PyDict_SetItemString(stat_dict, "Cracked Hashes", Py_BuildValue ("i", hashcat_status->digests_done));
 	  PyDict_SetItemString(stat_dict, "Speed All", Py_BuildValue ("s", hashcat_status->speed_sec_all));
+	  PyDict_SetItemString(stat_dict, "Speed Raw", Py_BuildValue ("d", hashes_msec_all));
 	  PyDict_SetItemString(stat_dict, "Restore Point", Py_BuildValue ("K", hashcat_status->restore_point));
 	  PyDict_SetItemString(stat_dict, "ETA (Relative)", Py_BuildValue ("s", hashcat_status->time_estimated_relative));
 	  PyDict_SetItemString(stat_dict, "ETA (Absolute)", Py_BuildValue ("s", hashcat_status->time_estimated_absolute));
 	  PyDict_SetItemString(stat_dict, "Running Time", Py_BuildValue ("d", hashcat_status->msec_running));
+	  PyDict_SetItemString(stat_dict, "Brain Traffic (RX)", Py_BuildValue ("s", hashcat_status->brain_rx_all));
+	  PyDict_SetItemString(stat_dict, "Brain Traffic (TX)", Py_BuildValue ("s", hashcat_status->brain_tx_all));
+	  PyDict_SetItemString(stat_dict, "Rejected", Py_BuildValue ("i", hashcat_status->progress_rejected));
+	  PyDict_SetItemString(stat_dict, "Rejected Percentage", Py_BuildValue ("d", hashcat_status->progress_rejected_percent));
+	  PyDict_SetItemString(stat_dict, "Salts", Py_BuildValue ("i", hashcat_status->salts_cnt));
+	  PyDict_SetItemString(stat_dict, "Device Temperatures", temp_dict);
+
 	  hcfree (hashcat_status);
 	  return stat_dict;
   }
@@ -796,6 +879,91 @@ static PyObject *hashcat_status_get_status (hashcatObject * self, PyObject * noa
 	  return NULL;
   }
 }
+
+
+
+
+PyDoc_STRVAR(hashcat_list_hashmodes__doc__,
+"Return dictionary containing all hash modes\n\n");
+
+typedef struct usage_sort
+{
+  u32   hash_mode;
+  char *hash_name;
+  u32   hash_category;
+
+} usage_sort_t;
+
+static int sort_by_usage (const void *p1, const void *p2)
+{
+  const usage_sort_t *u1 = (const usage_sort_t *) p1;
+  const usage_sort_t *u2 = (const usage_sort_t *) p2;
+
+  if (u1->hash_category > u2->hash_category) return  1;
+  if (u1->hash_category < u2->hash_category) return -1;
+
+  const int rc_name = strncmp (u1->hash_name + 1, u2->hash_name + 1, 15); // yes, strange...
+
+  if (rc_name > 0) return  1;
+  if (rc_name < 0) return -1;
+
+  if (u1->hash_mode > u2->hash_mode) return  1;
+  if (u1->hash_mode < u2->hash_mode) return -1;
+
+  return 0;
+}
+
+static PyObject *hashcat_list_hashmodes (hashcatObject * self, PyObject * noargs)
+{
+  const folder_config_t *folder_config = self->hashcat_ctx->folder_config;
+  const hashconfig_t    *hashconfig    = self->hashcat_ctx->hashconfig;
+        user_options_t  *user_options  = self->hashcat_ctx->user_options;
+  char *modulefile = (char *) hcmalloc (HCBUFSIZ_TINY);
+
+  usage_sort_t *usage_sort_buf = (usage_sort_t *) hccalloc (MODULE_HASH_MODES_MAXIMUM, sizeof (usage_sort_t));
+
+  PyObject *hashmodes_dict = PyDict_New();
+  int usage_sort_cnt = 0;
+
+  for (int i = 0; i < MODULE_HASH_MODES_MAXIMUM; i++)
+  {
+    user_options->hash_mode = i;
+
+    module_filename (folder_config, i, modulefile, HCBUFSIZ_TINY);
+
+    if (hc_path_exist (modulefile) == false) continue;
+
+    const int rc = hashconfig_init (self->hashcat_ctx);
+
+    if (rc == 0)
+    {
+      usage_sort_buf[usage_sort_cnt].hash_mode     = hashconfig->hash_mode;
+      usage_sort_buf[usage_sort_cnt].hash_name     = hcstrdup (hashconfig->hash_name);
+      usage_sort_buf[usage_sort_cnt].hash_category = hashconfig->hash_category;
+
+      usage_sort_cnt++;
+    }
+
+    hashconfig_destroy (self->hashcat_ctx);
+  }
+
+  hcfree (modulefile);
+
+  qsort (usage_sort_buf, usage_sort_cnt, sizeof (usage_sort_t), sort_by_usage);
+  for (int i = 0; i < usage_sort_cnt; i++)
+  {
+    PyObject *hashmodes_list = PyList_New(0);
+    PyList_Append(hashmodes_list, Py_BuildValue ("s", usage_sort_buf[i].hash_name));
+    PyList_Append(hashmodes_list, Py_BuildValue ("s", strhashcategory (usage_sort_buf[i].hash_category)));
+    PyDict_SetItem(hashmodes_dict, Py_BuildValue ("i", usage_sort_buf[i].hash_mode), hashmodes_list);
+  }
+
+  hcfree (usage_sort_buf);
+
+  return hashmodes_dict;
+
+}
+
 
 PyDoc_STRVAR(status_get_device_info_cnt__doc__,
 "status_get_device_info_cnt -> int\n\n\
@@ -844,6 +1012,18 @@ static PyObject *hashcat_status_get_skipped_dev (hashcatObject * self, PyObject 
   return PyBool_FromLong (rtn);
 }
 
+PyDoc_STRVAR(status_get_log__doc__,
+"hashcat_status_get_log-> char\n\n\
+Return event context info.\n\n");
+
+
+static PyObject *hashcat_status_get_log (hashcatObject * self, PyObject * noargs)
+{
+
+  char *rtn;
+  rtn = hashcat_get_log (self->hashcat_ctx);
+  return Py_BuildValue ("s", rtn);
+}
 
 PyDoc_STRVAR(status_get_session__doc__,
 "status_get_session -> str\n\n\
@@ -2071,6 +2251,57 @@ static int hashcat_setbenchmark (hashcatObject * self, PyObject * value, void *c
 
     Py_INCREF (value);
     self->user_options->benchmark = 0;
+
+  }
+
+
+
+  return 0;
+
+}
+
+
+PyDoc_STRVAR(benchmark_all__doc__,
+"benchmark\tbool\tRun benchmark against all hash modes\n\n");
+
+// getter - benchmark-all
+static PyObject *hashcat_getbenchmark_all (hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->benchmark_all);
+
+}
+
+// setter - benchmark-all
+static int hashcat_setbenchmark_all (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete benchmark-all attribute");
+    return -1;
+  }
+
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The benchmark-all attribute value must be a bool");
+    return -1;
+  }
+
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->benchmark_all = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->benchmark_all = 0;
 
   }
 
@@ -3616,74 +3847,74 @@ static int hashcat_setopencl_device_types (hashcatObject * self, PyObject * valu
 
 }
 
-PyDoc_STRVAR(opencl_devices__doc__,
-"opencl_devices\tstr\tOpenCL devices to use, separate with comma\n\n");
+PyDoc_STRVAR(backend_devices__doc__,
+"backend_devices\tstr\tOpenCL devices to use, separate with comma\n\n");
 
-// getter - opencl_devices
-static PyObject *hashcat_getopencl_devices (hashcatObject * self)
+// getter - backend_devices
+static PyObject *hashcat_getbackend_devices (hashcatObject * self)
 {
 
-  if (self->user_options->opencl_devices == NULL)
+  if (self->user_options->backend_devices == NULL)
   {
     Py_INCREF (Py_None);
     return Py_None;
   }
 
-  return Py_BuildValue ("s", self->user_options->opencl_devices);
+  return Py_BuildValue ("s", self->user_options->backend_devices);
 
 }
 
-// setter - opencl_devices
-static int hashcat_setopencl_devices (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_devices
+static int hashcat_setbackend_devices (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_devices attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_devices attribute");
     return -1;
   }
 
   if (!PyUnicode_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_devices attribute value must be a string");
+    PyErr_SetString (PyExc_TypeError, "The backend_devices attribute value must be a string");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->opencl_devices = PyUnicode_AsUTF8 (value);
+  self->user_options->backend_devices = PyUnicode_AsUTF8 (value);
 
   return 0;
 
 }
 
-PyDoc_STRVAR(opencl_info__doc__,
-"opencl_info\tbool\tShow info about OpenCL platforms/devices detected\n\n");
+PyDoc_STRVAR(backend_info__doc__,
+"backend_info\tbool\tShow info about OpenCL/CUDA platforms/devices detected\n\n");
 
-// getter - opencl_info
-static PyObject *hashcat_getopencl_info (hashcatObject * self)
+// getter - backend_info
+static PyObject *hashcat_getbackend_info (hashcatObject * self)
 {
 
-  return PyBool_FromLong (self->user_options->opencl_info);
+  return PyBool_FromLong (self->user_options->backend_info);
 
 }
 
-// setter - opencl_info
-static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_info
+static int hashcat_setbackend_info (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_info attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_info attribute");
     return -1;
   }
 
   if (!PyBool_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_info attribute value must be a bool");
+    PyErr_SetString (PyExc_TypeError, "The backend_info attribute value must be a bool");
     return -1;
   }
 
@@ -3691,14 +3922,14 @@ static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void 
   {
 
     Py_INCREF (value);
-    self->user_options->opencl_info = 1;
+    self->user_options->backend_info = 1;
 
   }
   else
   {
 
     Py_INCREF (value);
-    self->user_options->opencl_info = 0;
+    self->user_options->backend_info = 0;
 
   }
 
@@ -3708,79 +3939,38 @@ static int hashcat_setopencl_info (hashcatObject * self, PyObject * value, void 
 
 }
 
-PyDoc_STRVAR(opencl_platforms__doc__,
-"opencl_platforms\tstr\tOpenCL platforms to use, separate with comma\n\n");
 
-// getter - opencl_platforms
-static PyObject *hashcat_getopencl_platforms (hashcatObject * self)
+PyDoc_STRVAR(backend_vector_width__doc__,
+"backend_vector_width\tint\tManual override OpenCL vector-width to X\n\n");
+
+// getter - backend_vector_width
+static PyObject *hashcat_getbackend_vector_width (hashcatObject * self)
 {
 
-  if (self->user_options->opencl_platforms == NULL)
-  {
-    Py_INCREF (Py_None);
-    return Py_None;
-  }
-
-  return Py_BuildValue ("s", self->user_options->opencl_platforms);
+  return Py_BuildValue ("i", self->user_options->backend_vector_width);
 
 }
 
-// setter - opencl_platforms
-static int hashcat_setopencl_platforms (hashcatObject * self, PyObject * value, void *closure)
+// setter - backend_vector_width
+static int hashcat_setbackend_vector_width (hashcatObject * self, PyObject * value, void *closure)
 {
 
   if (value == NULL)
   {
 
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_platforms attribute");
-    return -1;
-  }
-
-  if (!PyUnicode_Check (value))
-  {
-
-    PyErr_SetString (PyExc_TypeError, "The opencl_platforms attribute value must be a string");
-    return -1;
-  }
-
-  Py_INCREF (value);
-  self->user_options->opencl_platforms = PyUnicode_AsUTF8 (value);
-
-  return 0;
-
-}
-
-PyDoc_STRVAR(opencl_vector_width__doc__,
-"opencl_vector_width\tint\tManual override OpenCL vector-width to X\n\n");
-
-// getter - opencl_vector_width
-static PyObject *hashcat_getopencl_vector_width (hashcatObject * self)
-{
-
-  return Py_BuildValue ("i", self->user_options->opencl_vector_width);
-
-}
-
-// setter - opencl_vector_width
-static int hashcat_setopencl_vector_width (hashcatObject * self, PyObject * value, void *closure)
-{
-
-  if (value == NULL)
-  {
-
-    PyErr_SetString (PyExc_TypeError, "Cannot delete opencl_vector_width attribute");
+    PyErr_SetString (PyExc_TypeError, "Cannot delete backend_vector_width attribute");
     return -1;
   }
 
   if (!PyLong_Check (value))
   {
 
-    PyErr_SetString (PyExc_TypeError, "The opencl_vector_width attribute value must be a int");
+    PyErr_SetString (PyExc_TypeError, "The backend_vector_width attribute value must be a int");
     return -1;
   }
 
   Py_INCREF (value);
-  self->user_options->opencl_vector_width = PyLong_AsLong (value);
+  self->user_options->backend_vector_width = PyLong_AsLong (value);
 
   return 0;
 
@@ -5179,7 +5369,6 @@ static int hashcat_setbrain_password (hashcatObject * self, PyObject * value, vo
 
 }
 
-
 PyDoc_STRVAR(brain_session_whitelist__doc__,
 "brain_session_whitelist -> str\n\n\
 Get/set brain session whitelist.\n\n");
@@ -5226,6 +5415,18 @@ static int hashcat_setbrain_session_whitelist (hashcatObject * self, PyObject * 
 
 }
 
+PyDoc_STRVAR(status_get_brain_rx_all__doc__,
+"status_get_brain_rx_all(device_id) -> str\n\n\
+Return total combine brain traffic of all devices.\n\n");
+
+static PyObject *hashcat_status_get_brain_rx_all (hashcatObject * self, PyObject * noargs)
+{
+
+  char *rtn;
+
+  rtn = status_get_brain_rx_all (self->hashcat_ctx);
+  return Py_BuildValue ("s", rtn);
+}
 #endif
 
 
@@ -5501,6 +5702,57 @@ static int hashcat_settruecrypt_keyfiles (hashcatObject * self, PyObject * value
 }
 
 
+PyDoc_STRVAR(usage__doc__,
+"Usage\tbool\tRun usage\n\n");
+
+// getter - usage
+static PyObject *hashcat_getusage (hashcatObject * self)
+{
+
+  return PyBool_FromLong (self->user_options->usage);
+
+}
+
+// setter - usage
+static int hashcat_setusage (hashcatObject * self, PyObject * value, void *closure)
+{
+
+  if (value == NULL)
+  {
+
+    PyErr_SetString (PyExc_TypeError, "Cannot delete usage attribute");
+    return -1;
+  }
+
+  if (!PyBool_Check (value))
+  {
+
+    PyErr_SetString (PyExc_TypeError, "The usage attribute value must be a bool");
+    return -1;
+  }
+
+  if (PyObject_IsTrue (value))
+  {
+
+    Py_INCREF (value);
+    self->user_options->usage = 1;
+
+  }
+  else
+  {
+
+    Py_INCREF (value);
+    self->user_options->usage = 0;
+
+  }
+
+
+
+  return 0;
+
+}
+
+
 PyDoc_STRVAR(username__doc__,
 "username\tbool\tEnable ignoring of usernames in hashfile\n\n");
 
@@ -5716,6 +5968,7 @@ static PyMethodDef hashcat_methods[] = {
 
   {"event_connect", (PyCFunction) hashcat_event_connect, METH_VARARGS|METH_KEYWORDS, event_connect__doc__},
   {"reset", (PyCFunction) hashcat_reset, METH_NOARGS, reset__doc__},
+  {"soft_reset", (PyCFunction) soft_reset, METH_NOARGS, soft_reset__doc__},
   {"hashcat_session_execute", (PyCFunction) hashcat_hashcat_session_execute, METH_VARARGS|METH_KEYWORDS, hashcat_session_execute__doc__},
   {"hashcat_session_pause", (PyCFunction) hashcat_hashcat_session_pause, METH_NOARGS, hashcat_session_pause__doc__},
   {"hashcat_session_resume", (PyCFunction) hashcat_hashcat_session_resume, METH_NOARGS, hashcat_session_resume__doc__},
@@ -5726,6 +5979,7 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_device_info_cnt", (PyCFunction) hashcat_status_get_device_info_cnt, METH_NOARGS, status_get_device_info_cnt__doc__},
   {"status_get_device_info_active", (PyCFunction) hashcat_status_get_device_info_active, METH_NOARGS, status_get_device_info_active__doc__},
   {"status_get_skipped_dev", (PyCFunction) hashcat_status_get_skipped_dev, METH_VARARGS, status_get_skipped_dev__doc__},
+  {"hashcat_status_get_log", (PyCFunction) hashcat_status_get_log, METH_NOARGS, status_get_log__doc__},
   {"status_get_session", (PyCFunction) hashcat_status_get_session, METH_NOARGS, status_get_session__doc__},
   {"status_get_status_string", (PyCFunction) hashcat_status_get_status_string, METH_NOARGS, status_get_status_string__doc__},
   {"status_get_status_number", (PyCFunction) hashcat_status_get_status_number, METH_NOARGS, status_get_status_number__doc__},
@@ -5790,7 +6044,9 @@ static PyMethodDef hashcat_methods[] = {
   {"status_get_memoryspeed_dev", (PyCFunction) hashcat_status_get_memoryspeed_dev, METH_VARARGS, status_get_memoryspeed_dev__doc__},
   {"status_get_progress_dev", (PyCFunction) hashcat_status_get_progress_dev, METH_VARARGS, status_get_progress_dev__doc__},
   {"status_get_runtime_msec_dev", (PyCFunction) hashcat_status_get_runtime_msec_dev, METH_VARARGS, status_get_runtime_msec_dev__doc__},
-  {NULL, NULL, 0, NULL}
+  {"status_get_brain_rx_all", (PyCFunction) hashcat_status_get_brain_rx_all, METH_NOARGS, status_get_brain_rx_all__doc__},
+  {"hashcat_list_hashmodes", (PyCFunction) hashcat_list_hashmodes, METH_NOARGS, hashcat_list_hashmodes__doc__},
+  {NULL, NULL, 0, NULL},
 };
 
 
@@ -5802,6 +6058,7 @@ static PyGetSetDef hashcat_getseters[] = {
   {"mask", (getter) hashcat_getmask, (setter) hashcat_setmask, mask__doc__, NULL},
   {"attack_mode", (getter) hashcat_getattack_mode, (setter) hashcat_setattack_mode, attack_mode__doc__, NULL},
   {"benchmark", (getter) hashcat_getbenchmark, (setter) hashcat_setbenchmark, benchmark__doc__, NULL},
+  {"benchmark_all", (getter) hashcat_getbenchmark_all, (setter) hashcat_setbenchmark_all, benchmark_all__doc__, NULL},
   {"bitmap_max", (getter) hashcat_getbitmap_max, (setter) hashcat_setbitmap_max, bitmap_max__doc__, NULL},
   {"bitmap_min", (getter) hashcat_getbitmap_min, (setter) hashcat_setbitmap_min, bitmap_min__doc__, NULL},
   {"cpu_affinity", (getter) hashcat_getcpu_affinity, (setter) hashcat_setcpu_affinity, cpu_affinity__doc__, NULL},
@@ -5837,10 +6094,9 @@ static PyGetSetDef hashcat_getseters[] = {
   {"markov_threshold", (getter) hashcat_getmarkov_threshold, (setter) hashcat_setmarkov_threshold, markov_threshold__doc__, NULL},
   {"spin_damp", (getter) hashcat_getspin_damp, (setter) hashcat_setspin_damp, spin_damp__doc__, NULL},
   {"opencl_device_types", (getter) hashcat_getopencl_device_types, (setter) hashcat_setopencl_device_types, opencl_device_types__doc__, NULL},
-  {"opencl_devices", (getter) hashcat_getopencl_devices, (setter) hashcat_setopencl_devices, opencl_devices__doc__, NULL},
-  {"opencl_info", (getter) hashcat_getopencl_info, (setter) hashcat_setopencl_info, opencl_info__doc__, NULL},
-  {"opencl_platforms", (getter) hashcat_getopencl_platforms, (setter) hashcat_setopencl_platforms, opencl_platforms__doc__, NULL},
-  {"opencl_vector_width", (getter) hashcat_getopencl_vector_width, (setter) hashcat_setopencl_vector_width, opencl_vector_width__doc__, NULL},
+  {"backend_devices", (getter) hashcat_getbackend_devices, (setter) hashcat_setbackend_devices, backend_devices__doc__, NULL},
+  {"backend_info", (getter) hashcat_getbackend_info, (setter) hashcat_setbackend_info, backend_info__doc__, NULL},
+  {"backend_vector_width", (getter) hashcat_getbackend_vector_width, (setter) hashcat_setbackend_vector_width, backend_vector_width__doc__, NULL},
   {"optimized_kernel_enable", (getter) hashcat_getoptimized_kernel_enable, (setter) hashcat_setoptimized_kernel_enable, optimized_kernel_enable__doc__, NULL},
   {"outfile", (getter) hashcat_getoutfile, (setter) hashcat_setoutfile, outfile__doc__, NULL},
   {"outfile_autohex", (getter) hashcat_getoutfile_autohex, (setter) hashcat_setoutfile_autohex, outfile_autohex__doc__, NULL},
@@ -5875,6 +6131,7 @@ static PyGetSetDef hashcat_getseters[] = {
 //   {"stdout_flag", (getter)hashcat_getstdout_flag, (setter)hashcat_setstdout_flag, stdout_flag__doc__, NULL },
   {"truecrypt_keyfiles", (getter) hashcat_gettruecrypt_keyfiles, (setter) hashcat_settruecrypt_keyfiles, truecrypt_keyfiles__doc__, NULL},
   {"username", (getter) hashcat_getusername, (setter) hashcat_setusername, username__doc__, NULL},
+  {"usage", (getter) hashcat_getusage, (setter) hashcat_setusage, usage__doc__, NULL},
   {"veracrypt_keyfiles", (getter) hashcat_getveracrypt_keyfiles, (setter) hashcat_setveracrypt_keyfiles, veracrypt_keyfiles__doc__, NULL},
   {"veracrypt_pim_start", (getter) hashcat_getveracrypt_pim_start, (setter) hashcat_setveracrypt_pim_start, veracrypt_pim_start__doc__, NULL},
   {"veracrypt_pim_stop", (getter) hashcat_getveracrypt_pim_stop, (setter) hashcat_setveracrypt_pim_stop, veracrypt_pim_stop__doc__, NULL},

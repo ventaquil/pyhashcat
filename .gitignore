@@ -1,5 +1,11 @@
+*.swp
+*.pyc
+*.__pycache
+build*
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+sys_benchmark.txt
+pyhashcat/hashcat/
