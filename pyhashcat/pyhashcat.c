@@ -372,6 +372,27 @@ static PyObject *soft_reset (hashcatObject * self, PyObject * args, PyObject *kw
   return Py_None;
 
 }
+
+PyDoc_STRVAR(status_reset__doc__,
+"status_reset\n\n\
+Reset status_ctx->devices_status.\n\n\
+Used to clear Bypass status after speed_only use.\n\n");
+
+
+static PyObject *status_reset (hashcatObject * self, PyObject * noargs)
+{
+
+  status_ctx_t *status_ctx = self->hashcat_ctx->status_ctx;
+  if (self->hashcat_ctx->status_ctx->devices_status == STATUS_BYPASS)
+  {
+    status_ctx->devices_status = STATUS_EXHAUSTED;
+    return Py_BuildValue ("i", 1);
+  }
+  return Py_BuildValue ("i", -1);
+
+}
+
+
 /* Helper function to to create a new hashcat object. Called from hashcat_new() */
 
 static hashcatObject *newhashcatObject (PyObject * arg)
@@ -5969,6 +5990,7 @@ static PyMethodDef hashcat_methods[] = {
   {"event_connect", (PyCFunction) hashcat_event_connect, METH_VARARGS|METH_KEYWORDS, event_connect__doc__},
   {"reset", (PyCFunction) hashcat_reset, METH_NOARGS, reset__doc__},
   {"soft_reset", (PyCFunction) soft_reset, METH_NOARGS, soft_reset__doc__},
+  {"status_reset", (PyCFunction) status_reset, METH_NOARGS, status_reset__doc__},
   {"hashcat_session_execute", (PyCFunction) hashcat_hashcat_session_execute, METH_VARARGS|METH_KEYWORDS, hashcat_session_execute__doc__},
   {"hashcat_session_pause", (PyCFunction) hashcat_hashcat_session_pause, METH_NOARGS, hashcat_session_pause__doc__},
   {"hashcat_session_resume", (PyCFunction) hashcat_hashcat_session_resume, METH_NOARGS, hashcat_session_resume__doc__},
