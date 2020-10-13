@@ -20,21 +20,19 @@ Requirements:
 ### Install libhashcat and pyhashcat:
 
 ```
-git clone https://github.com/Rich5/pyHashcat.git
-cd pyhashcat/pyhashcat
-git clone https://github.com/hashcat/hashcat.git
-cd hashcat/
-sudo make install_library
-sudo make install
-cd ..
-python setup.py build_ext -R /usr/local/lib
-sudo python setup.py install
+user@host:~$ git clone --recurse-submodules https://github.com/ventaquil/pyhashcat.git
+user@host:~$ cd pyhashcat/
+user@host:~/pyhashcat$ cd hashcat/
+user@host:~/pyhashcat/hashcat$ sudo make -j$(nproc) install_library install_library_dev install_modules install_kernels
+user@host:~/pyhashcat/hashcat$ cd ..
+user@host:~/pyhashcat$ python3 setup.py build_ext -R /usr/local/lib
+user@host:~/pyhashcat$ sudo python3 setup.py install
 ```
 
 ### Simple Test:
 
 ```
-user@host:~/pyHashcat/pyhashcat$ python simple_mask.py
+user@host:~/pyhashcat$ python3 pyhashcat/simple_mask.py
 -------------------------------
 ---- Simple pyhashcat Test ----
 -------------------------------
