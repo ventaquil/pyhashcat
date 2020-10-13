@@ -2849,6 +2849,7 @@ static int hashcat_sethash_mode (hashcatObject * self, PyObject * value, void *c
 
   Py_INCREF (value);
   self->user_options->hash_mode = PyLong_AsLong (value);
+  self->user_options->hash_mode_chgd = true;
 
   return 0;
 
