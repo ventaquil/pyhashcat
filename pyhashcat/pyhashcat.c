@@ -8,17 +8,18 @@
 #include <assert.h>
 #include <pthread.h>
 
+#include <hashcat/common.h>
+#include <hashcat/types.h>
+#include <hashcat/hwmon.h>
+#include <hashcat/memory.h>
+#include <hashcat/status.h>
+#include <hashcat/user_options.h>
+#include <hashcat/hashcat.h>
+#include <hashcat/interface.h>
+#include <hashcat/shared.h>
+#include <hashcat/usage.h>
+
 #include "structmember.h"
-#include "common.h"
-#include "types.h"
-#include "hwmon.h"
-#include "memory.h"
-#include "status.h"
-#include "user_options.h"
-#include "hashcat.h"
-#include "interface.h"
-#include "shared.h"
-#include "usage.h"
 
 #ifndef MAXH
 #define MAXH 100
