@@ -25,7 +25,7 @@ pyhashcat_module = Extension('pyhashcat',
 							library_dirs = [hc_lib_path],
 							libraries = [hc_lib],
 							extra_link_args = ['-shared', '-Wl,-R/usr/local/lib'],
-							sources = ['pyhashcat.c'],
+							sources = ['pyhashcat/pyhashcat.c'],
 							extra_compile_args=['-std=c99', '-DWITH_BRAIN',
                                                 '-Wimplicit-function-declaration']
 							)
