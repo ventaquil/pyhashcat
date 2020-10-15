@@ -535,18 +535,9 @@ static PyObject *hashcat_hashcat_session_execute (hashcatObject * self, PyObject
 
     }
 
-    int rtn;
-    pthread_t hThread;
+    backend_info (self->hashcat_ctx);
 
-    Py_BEGIN_ALLOW_THREADS
-
-    rtn = pthread_create(&hThread, NULL, &hc_session_exe_thread, (void *)self);
-
-    Py_END_ALLOW_THREADS
-
-    //usage_big_print (self->hashcat_ctx);
-
-    return Py_BuildValue ("i", rtn);
+    return Py_BuildValue ("i", 0);
 
   } else if (self->hash == NULL) {
 
