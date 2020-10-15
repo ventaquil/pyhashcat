@@ -6152,7 +6152,7 @@ static PyMemberDef hashcat_members[] = {
 
 static PyTypeObject hashcat_Type = {
   PyVarObject_HEAD_INIT(NULL, 0)  /* ob_size */
-  "pyhashcat.hashcat",          /* tp_name */
+  "pyhashcat.Hashcat",          /* tp_name */
   sizeof (hashcatObject),       /* tp_basicsize */
   0,                            /* tp_itemsize */
   (destructor) hashcat_dealloc, /* tp_dealloc */
@@ -6225,13 +6225,13 @@ PyMODINIT_FUNC PyInit_pyhashcat(void)
 
   if(ErrorObject == NULL){
 
-    ErrorObject = PyErr_NewException("hashcat.error", NULL, NULL);
+    ErrorObject = PyErr_NewException("pyhashcat.Error", NULL, NULL);
     if(ErrorObject == NULL)
       return NULL;
   }
 
   Py_INCREF (ErrorObject);
-  PyModule_AddObject (m, "error", ErrorObject);
+  PyModule_AddObject (m, "Error", ErrorObject);
 
   if(PyType_Ready(&hashcat_Type) < 0)
     return NULL;
