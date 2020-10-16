@@ -2937,6 +2937,68 @@ static int hashcat_setbackend_devices(hashcatObject *self, PyObject *value, void
     return 0;
 }
 
+PyDoc_STRVAR(backend_ignore_cuda__doc__,
+             "backend_disable_cuda\tbool\tIgnore CUDA devices\n\n");
+
+// getter - backend_ignore_cuda
+static PyObject *hashcat_getbackend_ignore_cuda(hashcatObject *self) {
+    return PyBool_FromLong(self->user_options->backend_ignore_cuda);
+}
+
+// setter - backend_ignore_cuda
+static int hashcat_setbackend_ignore_cuda(hashcatObject *self, PyObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete backend_ignore_cuda attribute");
+        return -1;
+    }
+
+    if (!PyBool_Check(value)) {
+        PyErr_SetString(PyExc_TypeError, "The backend_ignore_cuda attribute value must be a bool");
+        return -1;
+    }
+
+    if (PyObject_IsTrue(value)) {
+        Py_INCREF(value);
+        self->user_options->backend_ignore_cuda = 1;
+    } else {
+        Py_INCREF(value);
+        self->user_options->backend_ignore_cuda = 0;
+    }
+
+    return 0;
+}
+
+PyDoc_STRVAR(backend_ignore_opencl__doc__,
+             "backend_ignore_opencl\tbool\tIgnore OpenCL devices\n\n");
+
+// getter - backend_ignore_opencl
+static PyObject *hashcat_getbackend_ignore_opencl(hashcatObject *self) {
+    return PyBool_FromLong(self->user_options->backend_ignore_cuda);
+}
+
+// setter - backend_ignore_opencl
+static int hashcat_setbackend_ignore_opencl(hashcatObject *self, PyObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete backend_ignore_opencl attribute");
+        return -1;
+    }
+
+    if (!PyBool_Check(value)) {
+        PyErr_SetString(PyExc_TypeError, "The backend_ignore_opencl attribute value must be a bool");
+        return -1;
+    }
+
+    if (PyObject_IsTrue(value)) {
+        Py_INCREF(value);
+        self->user_options->backend_ignore_opencl = 1;
+    } else {
+        Py_INCREF(value);
+        self->user_options->backend_ignore_opencl = 0;
+    }
+
+    return 0;
+}
+
 PyDoc_STRVAR(backend_info__doc__,
              "backend_info\tbool\tShow info about OpenCL/CUDA platforms/devices detected\n\n");
 
@@ -4466,6 +4528,8 @@ static PyGetSetDef hashcat_getseters[] = {
     {"spin_damp", (getter) hashcat_getspin_damp, (setter) hashcat_setspin_damp, spin_damp__doc__, NULL},
     {"opencl_device_types", (getter) hashcat_getopencl_device_types, (setter) hashcat_setopencl_device_types, opencl_device_types__doc__, NULL},
     {"backend_devices", (getter) hashcat_getbackend_devices, (setter) hashcat_setbackend_devices, backend_devices__doc__, NULL},
+    {"backend_ignore_cuda", (getter) hashcat_getbackend_ignore_cuda, (setter) hashcat_setbackend_ignore_cuda, backend_ignore_cuda__doc__, NULL},
+    {"backend_ignore_opencl", (getter) hashcat_getbackend_ignore_opencl, (setter) hashcat_setbackend_ignore_opencl, backend_ignore_opencl__doc__, NULL},
     {"backend_info", (getter) hashcat_getbackend_info, (setter) hashcat_setbackend_info, backend_info__doc__, NULL},
     {"backend_vector_width", (getter) hashcat_getbackend_vector_width, (setter) hashcat_setbackend_vector_width, backend_vector_width__doc__, NULL},
     {"optimized_kernel_enable", (getter) hashcat_getoptimized_kernel_enable, (setter) hashcat_setoptimized_kernel_enable, optimized_kernel_enable__doc__, NULL},
