@@ -22,6 +22,12 @@
 
 #include "structmember.h"
 
+#include "backend.h"
+#include "hash.h"
+#include "hashcat.h"
+#include "options.h"
+#include "session.h"
+
 #ifndef MAXH
 #define MAXH 100
 #endif
@@ -38,8 +44,7 @@ PyDoc_STRVAR(event_types__doc__,
               Ex: hc.event_connect(callback=cracked_callback, signal=\"EVENT_CRACKER_HASH_CRACKED\")\n\n");
 
 /* hashcat object */
-typedef struct
-{
+typedef struct {
     PyObject_HEAD
     hashcat_ctx_t *hashcat_ctx;
     user_options_t *user_options;
@@ -53,7 +58,7 @@ typedef struct
     PyObject *rp_files;
     PyObject *event_types;
     int hc_argc;
-    char *hc_argv[];
+    char **hc_argv;
 } hashcatObject;
 
 typedef struct event_handlers_t {
@@ -519,7 +524,7 @@ static void hashcat_dealloc(hashcatObject *self) {
     Py_XDECREF(self->mask);
 
     // Initate hashcat clean-up
-    hashcat_session_destroy(self->hashcat_ctx);
+    // hashcat_session_destroy(self->hashcat_ctx);
 
     hashcat_destroy(self->hashcat_ctx);
 
@@ -4638,7 +4643,7 @@ static PyTypeObject hashcat_Type = {
 /* module init */
 
 PyMODINIT_FUNC PyInit_pyhashcat(void) {
-    PyObject *m;
+    PyObject *module;
 
     if (!PyEval_ThreadsInitialized()) {
         PyEval_InitThreads();
@@ -4659,10 +4664,10 @@ PyMODINIT_FUNC PyInit_pyhashcat(void) {
         NULL,                          /* m_clear */
         NULL,                          /* m_free */
     };
-    m = PyModule_Create(&moduledef);
-    /* m = Py_InitModule3 ("pyhashcat", NULL, "Python Bindings for hashcat"); */
+    module = PyModule_Create(&moduledef);
+    /* module = Py_InitModule3 ("pyhashcat", NULL, "Python Bindings for hashcat"); */
 
-    if (m == NULL) {
+    if (module == NULL) {
         return NULL;
     }
 
@@ -4674,13 +4679,53 @@ PyMODINIT_FUNC PyInit_pyhashcat(void) {
     }
 
     Py_INCREF(ErrorObject);
-    PyModule_AddObject(m, "Error", ErrorObject);
+    PyModule_AddObject(module, "Error", ErrorObject);
 
     if (PyType_Ready(&hashcat_Type) < 0) {
         return NULL;
     }
 
-    PyModule_AddObject(m, "Hashcat", (PyObject *) &hashcat_Type);
+    PyModule_AddObject(module, "Hashcat", (PyObject *) &hashcat_Type);
 
-    return m;
+    {
+        PyObject *submodule = PyInit_HashcatBackend();
+        if (submodule == NULL) {
+            return NULL;
+        }
+        PyModule_AddObject(module, "backend", submodule);
+    }
+
+    {
+        PyObject *submodule = PyInit_HashcatHash();
+        if (submodule == NULL) {
+            return NULL;
+        }
+        PyModule_AddObject(module, "hash", submodule);
+    }
+
+    {
+        PyObject *submodule = PyInit_Hashcat();
+        if (submodule == NULL) {
+            return NULL;
+        }
+        PyModule_AddObject(module, "hashcat", submodule);
+    }
+
+    {
+        PyObject *submodule = PyInit_HashcatSession();
+        if (submodule == NULL) {
+            return NULL;
+        }
+        PyModule_AddObject(module, "session", submodule);
+    }
+
+    {
+        PyObject *submodule = PyInit_HashcatOptions();
+        if (submodule == NULL) {
+            return NULL;
+        }
+        PyModule_AddObject(module, "options", submodule);
+    }
+
+    return module;
 }
