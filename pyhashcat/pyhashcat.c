@@ -822,8 +822,10 @@ static PyObject *hashcat_status_get_status(hashcatObject *self, PyObject *noargs
         PyDict_SetItemString(stat_dict, "ETA (Relative)", Py_BuildValue("s", hashcat_status->time_estimated_relative));
         PyDict_SetItemString(stat_dict, "ETA (Absolute)", Py_BuildValue("s", hashcat_status->time_estimated_absolute));
         PyDict_SetItemString(stat_dict, "Running Time", Py_BuildValue("d", hashcat_status->msec_running));
+#ifdef WITH_BRAIN
         PyDict_SetItemString(stat_dict, "Brain Traffic (RX)", Py_BuildValue("s", hashcat_status->brain_rx_all));
         PyDict_SetItemString(stat_dict, "Brain Traffic (TX)", Py_BuildValue("s", hashcat_status->brain_tx_all));
+#endif // WITH_BRAIN
         PyDict_SetItemString(stat_dict, "Rejected", Py_BuildValue("i", hashcat_status->progress_rejected));
         PyDict_SetItemString(stat_dict, "Rejected Percentage", Py_BuildValue("d", hashcat_status->progress_rejected_percent));
         PyDict_SetItemString(stat_dict, "Salts", Py_BuildValue("i", hashcat_status->salts_cnt));
@@ -4049,7 +4051,7 @@ static PyObject *hashcat_status_get_brain_rx_all(hashcatObject *self, PyObject *
     char *rtn = status_get_brain_rx_all(self->hashcat_ctx);
     return Py_BuildValue("s", rtn);
 }
-#endif
+#endif // WITH_BRAIN
 
 PyDoc_STRVAR(session__doc__,
              "session\tstr\tDefine specific session name\n\n");
@@ -4479,7 +4481,9 @@ static PyMethodDef hashcat_methods[] = {
     {"status_get_memoryspeed_dev", (PyCFunction) hashcat_status_get_memoryspeed_dev, METH_VARARGS, status_get_memoryspeed_dev__doc__},
     {"status_get_progress_dev", (PyCFunction) hashcat_status_get_progress_dev, METH_VARARGS, status_get_progress_dev__doc__},
     {"status_get_runtime_msec_dev", (PyCFunction) hashcat_status_get_runtime_msec_dev, METH_VARARGS, status_get_runtime_msec_dev__doc__},
+#ifdef WITH_BRAIN
     {"status_get_brain_rx_all", (PyCFunction) hashcat_status_get_brain_rx_all, METH_NOARGS, status_get_brain_rx_all__doc__},
+#endif // WITH_BRAIN
     {"hashcat_list_hashmodes", (PyCFunction) hashcat_list_hashmodes, METH_NOARGS, hashcat_list_hashmodes__doc__},
     {NULL, NULL, 0, NULL},
 };
