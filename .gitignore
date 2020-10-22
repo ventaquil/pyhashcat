@@ -1,11 +1,10 @@
-*.swp
-*.pyc
-*.__pycache
-build*
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-sys_benchmark.txt
-pyhashcat/hashcat/
+# Byte-compiled
+__pycache__/
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
