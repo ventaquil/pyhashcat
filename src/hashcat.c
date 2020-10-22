@@ -5,6 +5,7 @@
 #include <hashcat/hashcat.h>
 #include <hashcat/interface.h>
 #include <hashcat/memory.h>
+#include <hashcat/shared.h>
 #include <hashcat/user_options.h>
 
 #include "backend.h"
@@ -41,9 +42,9 @@ static PyObject *_Hashcat_GetHashes(Hashcat *self) {
         if (hashconfig_init(hashcat_ctx) == 0) {
             const HashcatHash *hash = HashcatHash_New(hashconfig->hash_mode, hashconfig->hash_name);
             PyList_Append(hashes, (PyObject *) hash);
-        }
 
-        hashconfig_destroy(hashcat_ctx);
+            hashconfig_destroy(hashcat_ctx);
+        }
     }
 
     Py_DECREF(HashcatSession_Destroy(session, NULL));
