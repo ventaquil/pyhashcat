@@ -1,23 +1,14 @@
 # pyhashcat
 
-Python bindings for hashcat
-------
-Python C API binding to libhashcat, originally written by Rich5. Updated to use the latest Hashcat version, with additional functionality added. 
-
-
-Pulled from here: https://github.com/Rich5/pyhashcat/tree/master/pyhashcat and ported to Python v3 here: https://github.com/initiate6/pyhashcat/tree/master/pyhashcat
-
-pyhashcat has been completely rewritten as a Python C extension to interface directly with libhashcat. The pyhashcat module now acts as direct bindings to Hashcat.
-
-VERSION: 4.0-alpha
+Python bindings for Hashcat
 
 Requirements: 
 * libhashcat 6.1.1
 * Python +3.6
 
-### Install libhashcat and pyhashcat:
+## Install libhashcat and pyhashcat
 
-```
+```shellsession
 user@host:~$ git clone --recurse-submodules https://github.com/ventaquil/pyhashcat.git
 user@host:~$ cd pyhashcat/
 user@host:~/pyhashcat$ cd hashcat/
@@ -27,16 +18,9 @@ user@host:~/pyhashcat$ python3 setup.py build_ext -R /usr/local/lib
 user@host:~/pyhashcat$ sudo python3 setup.py install
 ```
 
-### Help:
+## Example
 
-```
-import pyhashcat
-help(pyhashcat)
-```
-
-### Example
-
-```
+```python3
 import pyhashcat
 hashcat = pyhashcat.hashcat.Hashcat()    # create new Hashcat object
 print(hashcat.backend.platforms)         # return backend platforms
@@ -54,4 +38,13 @@ hashes = [
     hashcat.hashes[-1],
 ]
 device.benchmark(hashes)                 # can pass list
+```
+
+## History
+
+```
+Rich5/pyhashcat
+└── initiate6/pyhashcat
+    └── f0cker/pyhashcat
+        └── ventaquil/pyhashcat
 ```
